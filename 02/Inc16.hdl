@@ -1,0 +1,66 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/2/Inc16.hdl
+/**
+ * 16-bit incrementer:
+ * out = in + 1
+ */
+CHIP Inc16 {
+    IN in[16];
+    OUT out[16];
+
+    PARTS:
+    // Add16(a = in, b[0]=true, b[1..15] = false, out = out);
+    
+    // carry1 = in[0]
+    /* And(a=in[0], b=in[1], out=carry2);
+    And(a=carry2, b=in[2], out=carry3);
+    And(a=carry3, b=in[3], out=carry4);
+    And(a=carry4, b=in[4], out=carry5);
+    And(a=carry5, b=in[5], out=carry6);
+    And(a=carry6, b=in[6], out=carry7);
+    And(a=carry7, b=in[7], out=carry8);
+    And(a=carry8, b=in[8], out=carry9);
+    And(a=carry9, b=in[9], out=carry10);
+    And(a=carry10, b=in[10], out=carry11);
+    And(a=carry11, b=in[11], out=carry12);
+    And(a=carry12, b=in[12], out=carry13);
+    And(a=carry13, b=in[13], out=carry14);
+    And(a=carry14, b=in[14], out=carry15);
+
+    Not(in=in[0], out=out[0]);
+    Xor(a = in[1], b = in[0], out = out[1]);
+    Xor(a = in[2], b = carry2, out = out[2]);
+    Xor(a = in[3], b = carry3, out = out[3]);
+    Xor(a = in[4], b = carry4, out = out[4]);
+    Xor(a = in[5], b = carry5, out = out[5]);
+    Xor(a = in[6], b = carry6, out = out[6]);
+    Xor(a = in[7], b = carry7, out = out[7]);
+    Xor(a = in[8], b = carry8, out = out[8]);
+    Xor(a = in[9], b = carry9, out = out[9]);
+    Xor(a = in[10], b = carry10, out = out[10]);
+    Xor(a = in[11], b = carry11, out = out[11]);
+    Xor(a = in[12], b = carry12, out = out[12]);
+    Xor(a = in[13], b = carry13, out = out[13]);
+    Xor(a = in[14], b = carry14, out = out[14]);
+    Xor(a = in[15], b = carry15, out = out[15]);
+    */
+
+    Not(in=in[0], out=out[0]);    
+    HalfAdder(a=in[1], b=in[0], sum=out[1], carry=carry2);
+    HalfAdder(a=in[2], b=carry2, sum=out[2], carry=carry3);
+    HalfAdder(a=in[3], b=carry3, sum=out[3], carry=carry4);
+    HalfAdder(a=in[4], b=carry4, sum=out[4], carry=carry5);
+    HalfAdder(a=in[5], b=carry5, sum=out[5], carry=carry6);
+    HalfAdder(a=in[6], b=carry6, sum=out[6], carry=carry7);
+    HalfAdder(a=in[7], b=carry7, sum=out[7], carry=carry8);
+    HalfAdder(a=in[8], b=carry8, sum=out[8], carry=carry9);
+    HalfAdder(a=in[9], b=carry9, sum=out[9], carry=carry10);
+    HalfAdder(a=in[10], b=carry10, sum=out[10], carry=carry11);
+    HalfAdder(a=in[11], b=carry11, sum=out[11], carry=carry12);
+    HalfAdder(a=in[12], b=carry12, sum=out[12], carry=carry13);
+    HalfAdder(a=in[13], b=carry13, sum=out[13], carry=carry14);
+    HalfAdder(a=in[14], b=carry14, sum=out[14], carry=carry15);
+    HalfAdder(a=in[15], b=carry15, sum=out[15], carry=carry16);
+}
