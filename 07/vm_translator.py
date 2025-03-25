@@ -81,6 +81,18 @@ class VmTranslator():
             elif first_part in UNARY_OPS:
                 assert len(line_parts) == 1
                 new_lines = self.translate_unary_op(first_part)
+            elif first_part == "label":
+                assert len(line_parts) == 2
+                label = line_parts[1]
+                new_lines = self.translate_label(label)
+            elif first_part == "goto":
+                assert len(line_parts) == 2
+                label = line_parts[1]
+                new_lines = self.translate_goto(label)
+            elif first_part == "if-goto":
+                assert len(line_parts) == 2
+                label = line_parts[1]
+                new_lines = self.translate_if_goto(label)
             else:
                 raise ValueError(f"Unknown first line part {first_part}")
 
@@ -315,6 +327,41 @@ class VmTranslator():
         new_lines.extend(nl)
 
         nl = self.translate_push(TEMP, 0)
+        new_lines.extend(nl)
+
+        return new_lines
+    
+    @staticmethod
+    def translate_label(label):
+        new_lines = [
+            f"// VM: label {label}",
+            f"({label})"
+            ]
+        return new_lines
+    
+    @staticmethod
+    def translate_goto(label):
+        new_lines = [
+            f"// VM: goto {label}",
+            f"@{label}",
+            "0;JMP",
+        ]
+        return new_lines
+    
+    def translate_if_goto(self, label):
+        new_lines = [
+            f"// VM: if-goto {label}",
+        ]
+
+        nl = self.translate_pop(TEMP, 0)
+        new_lines.extend(nl)
+
+        nl = [
+            "@5",
+            "D=M",
+            f"@{label}",
+            "D;JNE",
+        ]
         new_lines.extend(nl)
 
         return new_lines
