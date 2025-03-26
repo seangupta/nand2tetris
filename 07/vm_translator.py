@@ -46,10 +46,11 @@ POINTER_LOCATION_TO_SYMBOL = {
 
 class VmTranslator():
 
-    def __init__(self, fn):
+    def __init__(self, fn, no_bootstrap):
         self.num_labels = 0
         self.fn = fn
         self.call_counters = {}
+        self.no_bootstrap = no_bootstrap
 
     @staticmethod
     def pre_process(lines):
@@ -82,11 +83,13 @@ class VmTranslator():
     def process(self, lines_stripped):     
         processed_lines = []
 
-        # new_lines = self.generate_bootstrap_code()
-        # processed_lines.extend(new_lines)
+        if not self.no_bootstrap:
+            print("Generating bootstrap code")
+            new_lines = self.generate_bootstrap_code()
+            processed_lines.extend(new_lines)
 
+        print("Generating main code")
         for line in lines_stripped:
-
             line_parts = line.split()
             first_part = line_parts[0]
             if first_part == "push":
@@ -626,7 +629,7 @@ class VmTranslator():
         ]
         return new_lines
 
-def main(file_path):
+def main(file_path, no_bootstrap=False):
     with open(file_path, "r") as f:
         lines = f.readlines()
     print(f"Read {file_path}")
@@ -638,7 +641,7 @@ def main(file_path):
     assert tail.endswith(".vm")
     fn = tail.split(".vm")[0]
 
-    vm_translator = VmTranslator(fn)
+    vm_translator = VmTranslator(fn, no_bootstrap=no_bootstrap)
     lines_stripped = vm_translator.pre_process(lines)
     processed_lines = vm_translator.process(lines_stripped)
 
@@ -654,7 +657,8 @@ def main(file_path):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file_path")
-
+    parser.add_argument("--no_bootstrap", action='store_true', default=False)
     args = parser.parse_args()
     file_path = args.file_path
-    main(file_path)
+    no_bootstrap = args.no_bootstrap
+    main(file_path, no_bootstrap=no_bootstrap)
