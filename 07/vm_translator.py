@@ -10,6 +10,15 @@ TEMP = "temp"
 POINTER = "pointer"
 STATIC = "static"
 
+SP = "SP"
+LCL = "LCL"
+ARG = "ARG"
+THIS_SYMBOL = "THIS"
+THAT_SYMBOL = "THAT"
+
+END_FRAME = "END_FRAME"
+RET_ADDR = "RET_ADDR"
+
 ADD = "add"
 SUB = "sub"
 NEG = "neg"
@@ -24,14 +33,11 @@ BINARY_OPS = [ADD, SUB, EQ, GT, LT, AND, OR]
 UNARY_OPS = [NEG, NOT]
 
 SEGMENT_TO_BASE_ADDRESS = {
-    LOCAL: "LCL",
-    ARGUMENT: "ARG",
-    THIS: "THIS",
-    THAT: "THAT",
+    LOCAL: LCL,
+    ARGUMENT: ARG,
+    THIS: THIS_SYMBOL,
+    THAT: THAT_SYMBOL,
 }
-
-THIS_SYMBOL = "THIS"
-THAT_SYMBOL = "THAT"
 
 POINTER_LOCATION_TO_SYMBOL = {
     0: THIS_SYMBOL,
@@ -43,6 +49,7 @@ class VmTranslator():
     def __init__(self, fn):
         self.num_labels = 0
         self.fn = fn
+        self.call_counters = {}
 
     @staticmethod
     def pre_process(lines):
@@ -56,9 +63,28 @@ class VmTranslator():
                 lines_stripped.append(line)
 
         return lines_stripped
+    
+    def generate_bootstrap_code(self):
+        new_lines = [
+            "// Bootstrap code",
+            "@256",
+            "D=A",
+            "@SP",
+            "M=D",
+            "// call Sys.init",
+        ]
+
+        nl = self.translate_call("Sys.init", 0)
+        new_lines.extend(nl)
+        
+        return new_lines
 
     def process(self, lines_stripped):     
         processed_lines = []
+
+        # new_lines = self.generate_bootstrap_code()
+        # processed_lines.extend(new_lines)
+
         for line in lines_stripped:
 
             line_parts = line.split()
@@ -93,6 +119,19 @@ class VmTranslator():
                 assert len(line_parts) == 2
                 label = line_parts[1]
                 new_lines = self.translate_if_goto(label)
+            elif first_part == "call":
+                assert len(line_parts) == 3
+                function_name = line_parts[1]
+                num_args = int(line_parts[2])
+                new_lines = self.translate_call(function_name, num_args)
+            elif first_part == "function":
+                assert len(line_parts) == 3
+                function_name = line_parts[1]
+                num_local_vars = int(line_parts[2])
+                new_lines = self.translate_function(function_name, num_local_vars)
+            elif first_part == "return":
+                assert len(line_parts) == 1
+                new_lines = self.translate_return()
             else:
                 raise ValueError(f"Unknown first line part {first_part}")
 
@@ -150,12 +189,12 @@ class VmTranslator():
 
         new_lines.extend(
             [
-                "// RAM[SP] = D",
-                "@SP",
+                f"// RAM[{SP}] = D",
+                f"@{SP}",
                 "A=M",
                 "M=D",
-                "// SP++",
-                "@SP",
+                f"// {SP}++",
+                f"@{SP}",
                 "M=M+1",
                 ]
         )
@@ -217,11 +256,11 @@ class VmTranslator():
 
         new_lines.extend(
             [
-                "// SP--",
-                "@SP",
+                f"// {SP}--",
+                f"@{SP}",
                 "M=M-1",
-                "// D = RAM[SP]",
-                "@SP",
+                f"// D = RAM[{SP}]",
+                f"@{SP}",
                 "A=M",
                 "D=M",
                 "// RAM[segment_address] = D",
@@ -364,6 +403,227 @@ class VmTranslator():
         ]
         new_lines.extend(nl)
 
+        return new_lines
+    
+    @staticmethod
+    def translate_push_value_at_symbol(symbol):
+        assert symbol in [SP, LCL, ARG, THIS_SYMBOL, THAT_SYMBOL] or "$ret." in symbol
+
+        new_lines = [
+            f"// push value at {symbol}",
+            f"@{symbol}",
+            "D=M",
+            f"// RAM[{SP}] = D",
+            f"@{SP}",
+            "A=M",
+            "M=D",
+            f"// {SP}++",
+            f"@{SP}",
+            "M=M+1",
+        ]
+        return new_lines
+
+    def translate_call(self, function_name, num_args):
+
+        new_lines = []
+
+        call_num = self.call_counters.get(function_name, 0) + 1
+        self.call_counters[function_name] = call_num
+
+        ret_address_label = f"{function_name}$ret.{call_num}"
+
+        nl = self.translate_push_value_at_symbol(ret_address_label)
+        new_lines.extend(nl)
+
+        ## push LCL
+        nl = self.translate_push_value_at_symbol(LCL)
+        new_lines.extend(nl)
+
+        ## push ARG
+        nl = self.translate_push_value_at_symbol(ARG)
+        new_lines.extend(nl)
+
+        ## push THIS
+        nl = self.translate_push_value_at_symbol(THIS_SYMBOL)
+        new_lines.extend(nl)
+
+        # push THAT
+        nl = self.translate_push_value_at_symbol(THAT_SYMBOL)
+        new_lines.extend(nl)
+
+        ## ARG = SP – 5 – nArgs
+        nl = self.translate_push_value_at_symbol(SP)
+        new_lines.extend(nl)
+        nl = self.translate_push(CONSTANT, 5)
+        new_lines.extend(nl)
+        nl = self.translate_binary_op(SUB)
+        new_lines.extend(nl)
+        nl = self.translate_push(CONSTANT, num_args)
+        new_lines.extend(nl)
+        nl = self.translate_binary_op(SUB)
+        new_lines.extend(nl)
+
+        ## LCL = SP
+        nl = [
+            f"@{SP}",
+            "D=M",
+            f"@{LCL}",
+            "M=D",
+        ]
+        new_lines.extend(nl)
+
+        ## goto functionName
+        nl = self.translate_goto(function_name)
+        new_lines.extend(nl)
+
+        ## (retAddrLabel)
+        nl = [f"({ret_address_label})"]
+        new_lines.extend(nl)
+        
+
+        return new_lines
+    
+    def translate_function(self, function_name, num_local_vars):
+        new_lines = [
+            f"// VM: function {function_name} {num_local_vars}",
+            f"({function_name})",
+        ]
+        for _ in range(num_local_vars):
+            nl = self.translate_push(CONSTANT, 0)
+            new_lines.extend(nl)
+
+        return new_lines
+    
+    def translate_return(self):
+
+        new_lines = []
+
+        ## endFrame = LCL
+
+        nl = [
+            f"// endFrame = {LCL}",
+            f"@{LCL}",
+            "D=M",
+            f"@{END_FRAME}",
+            "M=D",
+            ]
+        new_lines.extend(nl)
+
+        ## retAddr = *(endFrame - 5)
+
+        nl = ["// retAddr = *(endFrame - 5)"]
+        new_lines.extend(nl)
+
+        nl = self.translate_derefer_endframe_diff(5)
+        new_lines.extend(nl)
+
+        nl = [
+            f"@{RET_ADDR}",
+            "M=D",
+        ]
+        new_lines.extend(nl)
+
+        ## *ARG = pop()
+
+        nl = [
+            f"// *{ARG} = pop()",
+            f"// {SP}--",
+            f"@{SP}",
+            "M=M-1",
+            f"// D = RAM[{SP}]",
+            f"@{SP}",
+            "A=M",
+            "D=M",
+            f"@{ARG}",
+            "A=M",
+            "M=D",
+        ]
+        new_lines.extend(nl)
+
+        nl = [
+            f"// {SP} = {ARG} + 1",
+            f"@{ARG}",
+            "D=M+1",
+            f"@{SP}",
+            "M=D",
+        ]
+        new_lines.extend(nl)
+
+        ## THAT = *(endFrame - 1)
+
+        nl = [f"// {THAT_SYMBOL} = *(endFrame - 1)"]
+        new_lines.extend(nl)
+
+        nl = self.translate_derefer_endframe_diff(1)
+        new_lines.extend(nl)
+
+        nl = [
+            f"@{THAT_SYMBOL}",
+            "M=D",
+        ]
+        new_lines.extend(nl)
+
+        ## THIS = *(endFrame - 2)
+
+        nl = [f"// {THIS_SYMBOL} = *(endFrame - 2)"]
+        new_lines.extend(nl)
+
+        nl = self.translate_derefer_endframe_diff(2)
+        new_lines.extend(nl)
+
+        nl = [
+            f"@{THIS_SYMBOL}",
+            "M=D",
+        ]
+        new_lines.extend(nl)
+
+        ## ARG = *(endFrame - 3)
+
+        nl = [f"// {ARG} = *(endFrame - 3)"]
+        new_lines.extend(nl)
+
+        nl = self.translate_derefer_endframe_diff(3)
+        new_lines.extend(nl)
+
+        nl = [
+            f"@{ARG}",
+            "M=D",
+        ]
+        new_lines.extend(nl)  
+
+        ## LCL = *(endFrame - 4)
+
+        nl = [f"// {LCL} = *(endFrame - 4)"]
+        new_lines.extend(nl)
+
+        nl = self.translate_derefer_endframe_diff(4)
+        new_lines.extend(nl)
+
+        nl = [
+            f"@{LCL}",
+            "M=D",
+        ]
+        new_lines.extend(nl)
+
+        nl = [
+            f"@{RET_ADDR}",
+            "A=M",
+            "0;JMP",
+        ]
+        new_lines.extend(nl)
+
+        return new_lines
+    
+    def translate_derefer_endframe_diff(self, val):
+        """Sets D = *(endFrame - val)"""
+
+        new_lines = [
+            f"@{val}",
+            "D=A",
+            f"@{END_FRAME}",
+            "A=M-D",
+            "D=M",
+        ]
         return new_lines
 
 def main(file_path):
