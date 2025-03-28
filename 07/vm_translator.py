@@ -54,6 +54,11 @@ class VmTranslator():
             self.call_counters = call_counters
         self.no_bootstrap = no_bootstrap
 
+    def translate(self, lines):
+        lines_stripped = self.pre_process(lines)
+        processed_lines = self.process(lines_stripped)
+        return processed_lines
+
     @staticmethod
     def pre_process(lines):
         print("Stripping whitespace and comments")
@@ -622,8 +627,7 @@ def main(path, no_bootstrap=False):
         out_path = os.path.join(head, f"{fn}.asm")
 
         vm_translator = VmTranslator(fn, no_bootstrap=no_bootstrap)
-        lines_stripped = vm_translator.pre_process(lines)
-        processed_lines = vm_translator.process(lines_stripped)
+        processed_lines = vm_translator.translate(lines)
 
     elif os.path.isdir(path):
         processed_lines = []
@@ -640,8 +644,7 @@ def main(path, no_bootstrap=False):
 
             vm_translator = VmTranslator(fn, no_bootstrap=no_bootstrap or num_files_processed > 0,
                                          call_counters=call_counters)
-            lines_stripped = vm_translator.pre_process(lines)
-            processed_lines_this_file = vm_translator.process(lines_stripped)
+            processed_lines_this_file = vm_translator.translate(lines)
             processed_lines.extend(processed_lines_this_file)
 
             num_files_processed += 1
