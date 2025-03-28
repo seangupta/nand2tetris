@@ -277,28 +277,14 @@ class VmTranslator():
         return new_lines
 
     def translate_binary_op(self, op):
-        new_lines = [f"// VM: {op}"]
-
-        "@SP",
-        "M=M-1",
-        "A=M",
-        "D=M",
-        "A=A-1",
-        "M=M{first_line_op}D",
-
-        nl = self.translate_pop(TEMP, 1)
-        new_lines.extend(nl)
-        
-        nl = self.translate_pop(TEMP, 0)
-        new_lines.extend(nl)
-
-        nl = [
-            f"// execute {op}",
-            "@5",
+        new_lines = [
+            f"// VM: {op}",
+            "@SP",
+            "M=M-1",
+            "A=M",
             "D=M",
-            "@6",
-        ]
-        new_lines.extend(nl)
+            "A=A-1",  
+            ]
 
         if op in [ADD, SUB, AND, OR]:
             if op == ADD:
@@ -310,11 +296,7 @@ class VmTranslator():
             elif op == OR:
                 first_line_op = "|"
 
-            nl = [
-                f"D=D{first_line_op}M",
-                "@7",
-                "M=D",
-                ]
+            nl = [f"M=M{first_line_op}D"]
             
         elif op in [EQ, GT, LT, AND, OR]:
             if op == EQ:
@@ -334,12 +316,12 @@ class VmTranslator():
                 comp = "JNE"
 
             nl = [
-                f"D=D{first_line_op}M",
-                "@7",
+                f"D=M{first_line_op}D",
                 "M=-1",
                 f"@TRUE{self.num_labels}",
                 f"D;{comp}",
-                "@7",
+                "@SP",
+                "A=M-1"
                 "M=0",
                 f"(TRUE{self.num_labels})",
             ]
@@ -348,9 +330,6 @@ class VmTranslator():
         else:
             raise ValueError(f"Unknown op {op}")
 
-        new_lines.extend(nl)
-
-        nl = self.translate_push(TEMP, 2)
         new_lines.extend(nl)
 
         return new_lines
