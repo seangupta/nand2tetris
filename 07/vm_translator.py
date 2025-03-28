@@ -288,35 +288,35 @@ class VmTranslator():
 
         if op in [ADD, SUB, AND, OR]:
             if op == ADD:
-                first_line_op = "+"
+                assembly_op = "+"
             elif op == SUB:
-                first_line_op = "-"
+                assembly_op = "-"
             elif op == AND:
-                first_line_op = "&"
+                assembly_op = "&"
             elif op == OR:
-                first_line_op = "|"
+                assembly_op = "|"
 
-            nl = [f"M=M{first_line_op}D"]
+            nl = [f"M=M{assembly_op}D"]
             
         elif op in [EQ, GT, LT, AND, OR]:
             if op == EQ:
-                first_line_op = "-"
+                assembly_op = "-"
                 comp = "JEQ"
             elif op == GT:
-                first_line_op = "-"
+                assembly_op = "-"
                 comp = "JGT"
             elif op == LT:
-                first_line_op = "-"
+                assembly_op = "-"
                 comp = "JLT"
             elif op == AND:
-                first_line_op = "&"
+                assembly_op = "&"
                 comp = "JNE"
             elif op == OR:
-                first_line_op = "|"
+                assembly_op = "|"
                 comp = "JNE"
 
             nl = [
-                f"D=M{first_line_op}D",
+                f"D=M{assembly_op}D",
                 "M=-1",
                 f"@TRUE{self.num_labels}",
                 f"D;{comp}",
@@ -335,29 +335,19 @@ class VmTranslator():
         return new_lines
 
     def translate_unary_op(self, op):
-        new_lines = [f"// VM: {op}"]
-
-        nl = self.translate_pop(TEMP, 0)
-        new_lines.extend(nl)
-
-        nl = [
-            f"// actually {op}",
-            "@5",
-        ]
-        new_lines.extend(nl)
-
         if op == NEG:
-            nl = ["M=-M"]
+            assembly_op = "-"
         elif op == NOT:
-            nl = ["M=!M"]
+            assembly_op = "!"
         else:
             raise ValueError(f"Unknown op {op}")
-        
-        new_lines.extend(nl)
 
-        nl = self.translate_push(TEMP, 0)
-        new_lines.extend(nl)
-
+        new_lines = [
+            f"// VM: {op}",
+            "@SP",
+            "A=M-1",
+            f"M={assembly_op}M",
+            ]
         return new_lines
     
     @staticmethod
