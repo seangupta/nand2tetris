@@ -45,11 +45,13 @@ POINTER_LOCATION_TO_SYMBOL = {
 }
 
 class VmTranslator():
-
-    def __init__(self, fn, no_bootstrap):
+    def __init__(self, fn, no_bootstrap, call_counters=None):
         self.num_labels = 0
         self.fn = fn
-        self.call_counters = {}
+        if call_counters is None:
+            self.call_counters = {}
+        else:
+            self.call_counters = call_counters
         self.no_bootstrap = no_bootstrap
 
     @staticmethod
@@ -60,7 +62,7 @@ class VmTranslator():
             line = line.split("//")[0]
             line = line.strip()
             if line:
-                print(line)
+                # print(line)
                 lines_stripped.append(line)
 
         return lines_stripped
@@ -190,8 +192,7 @@ class VmTranslator():
         
         new_lines.extend(nl)
 
-        new_lines.extend(
-            [
+        nl = [
                 f"// RAM[{SP}] = D",
                 f"@{SP}",
                 "A=M",
@@ -199,8 +200,8 @@ class VmTranslator():
                 f"// {SP}++",
                 f"@{SP}",
                 "M=M+1",
-                ]
-        )
+            ]
+        new_lines.extend(nl)
 
         return new_lines
     
@@ -277,6 +278,13 @@ class VmTranslator():
 
     def translate_binary_op(self, op):
         new_lines = [f"// VM: {op}"]
+
+        "@SP",
+        "M=M-1",
+        "A=M",
+        "D=M",
+        "A=A-1",
+        "M=M{first_line_op}D",
 
         nl = self.translate_pop(TEMP, 1)
         new_lines.extend(nl)
@@ -428,7 +436,7 @@ class VmTranslator():
 
     def translate_call(self, function_name, num_args):
 
-        new_lines = []
+        new_lines = [f"// VM: call {function_name} {num_args}"]
 
         call_num = self.call_counters.get(function_name, 0) + 1
         self.call_counters[function_name] = call_num
@@ -455,15 +463,16 @@ class VmTranslator():
         new_lines.extend(nl)
 
         ## ARG = SP – 5 – nArgs
-        nl = self.translate_push_value_at_symbol(SP)
-        new_lines.extend(nl)
-        nl = self.translate_push(CONSTANT, 5)
-        new_lines.extend(nl)
-        nl = self.translate_binary_op(SUB)
-        new_lines.extend(nl)
-        nl = self.translate_push(CONSTANT, num_args)
-        new_lines.extend(nl)
-        nl = self.translate_binary_op(SUB)
+        nl = [
+            f"@{SP}",
+            "D=M",
+            "@5",
+            "D=D-A",
+            f"@{num_args}",
+            "D=D-A",
+            f"@{ARG}",
+            "M=D",
+        ]
         new_lines.extend(nl)
 
         ## LCL = SP
@@ -482,7 +491,6 @@ class VmTranslator():
         ## (retAddrLabel)
         nl = [f"({ret_address_label})"]
         new_lines.extend(nl)
-        
 
         return new_lines
     
@@ -499,7 +507,7 @@ class VmTranslator():
     
     def translate_return(self):
 
-        new_lines = []
+        new_lines = ["// VM: return"]
 
         ## endFrame = LCL
 
@@ -629,24 +637,55 @@ class VmTranslator():
         ]
         return new_lines
 
-def main(file_path, no_bootstrap=False):
-    with open(file_path, "r") as f:
-        lines = f.readlines()
-    print(f"Read {file_path}")
+def main(path, no_bootstrap=False):
 
-    head, tail = os.path.split(file_path)
-    if not tail:
-        raise ValueError
+    if os.path.isfile(path):
+        with open(path, "r") as f:
+            lines = f.readlines()
+        print(f"Read {path}")
 
-    assert tail.endswith(".vm")
-    fn = tail.split(".vm")[0]
+        head, tail = os.path.split(path)
+        if not tail:
+            raise ValueError
 
-    vm_translator = VmTranslator(fn, no_bootstrap=no_bootstrap)
-    lines_stripped = vm_translator.pre_process(lines)
-    processed_lines = vm_translator.process(lines_stripped)
+        assert tail.endswith(".vm")
+        fn = tail.split(".vm")[0]
+        out_path = os.path.join(head, f"{fn}.asm")
 
-    out_name = f"{fn}.asm"
-    out_path = os.path.join(head, out_name)
+        vm_translator = VmTranslator(fn, no_bootstrap=no_bootstrap)
+        lines_stripped = vm_translator.pre_process(lines)
+        processed_lines = vm_translator.process(lines_stripped)
+
+    elif os.path.isdir(path):
+        processed_lines = []
+        num_files_processed = 0
+        call_counters = None
+        for fn in os.listdir(path):
+            if not fn.endswith(".vm"):
+                continue
+            
+            full_path = os.path.join(path, fn)
+            with open(full_path, "r") as f:
+                lines = f.readlines()
+            print(f"Read {full_path}")
+
+            vm_translator = VmTranslator(fn, no_bootstrap=no_bootstrap or num_files_processed > 0,
+                                         call_counters=call_counters)
+            lines_stripped = vm_translator.pre_process(lines)
+            processed_lines_this_file = vm_translator.process(lines_stripped)
+            processed_lines.extend(processed_lines_this_file)
+
+            num_files_processed += 1
+            call_counters = vm_translator.call_counters
+
+        if num_files_processed == 0:
+            raise ValueError("No .vm files found")
+
+        out_path = os.path.join(path, f"{os.path.split(path)[-1]}.asm")
+
+    else:
+        raise ValueError("Unknown path type")
+
     with open(out_path, "w") as f:
         f.writelines("\n".join(processed_lines))
 
@@ -656,9 +695,7 @@ def main(file_path, no_bootstrap=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("file_path")
+    parser.add_argument("path")
     parser.add_argument("--no_bootstrap", action='store_true', default=False)
     args = parser.parse_args()
-    file_path = args.file_path
-    no_bootstrap = args.no_bootstrap
-    main(file_path, no_bootstrap=no_bootstrap)
+    main(args.path, no_bootstrap= args.no_bootstrap)
