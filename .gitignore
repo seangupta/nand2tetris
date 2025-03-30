@@ -20,3 +20,6 @@
 07/StaticTest/StaticTest.tst
 07/StaticTest/StaticTest.vm
 07/StaticTest/StaticTestVME.tst
+08/*.cmp
+08/*.tst
+08/*.vm
