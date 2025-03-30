@@ -327,7 +327,7 @@ class VmTranslator():
                 f"@TRUE{self.num_labels}",
                 f"D;{comp}",
                 "@SP",
-                "A=M-1"
+                "A=M-1",
                 "M=0",
                 f"(TRUE{self.num_labels})",
             ]
