@@ -290,11 +290,12 @@ class VmTranslator():
             "D=M",
             "A=A-1",  
             ]
-
-        if op in [ADD, SUB, AND, OR]:
-            if op == ADD:
-                assembly_op = "+"
-            elif op == SUB:
+        
+        if op == ADD:
+            assembly_op = "+"
+            nl = ["M=D+M"]
+        elif op in [SUB, AND, OR]:
+            if op == SUB:
                 assembly_op = "-"
             elif op == AND:
                 assembly_op = "&"
@@ -392,7 +393,7 @@ class VmTranslator():
     
     @staticmethod
     def translate_push_value_at_symbol(symbol):
-        assert symbol in [SP, LCL, ARG, THIS_SYMBOL, THAT_SYMBOL] or "$ret." in symbol
+        assert symbol in [SP, LCL, ARG, THIS_SYMBOL, THAT_SYMBOL]
 
         new_lines = [
             f"// push value at {symbol}",
@@ -415,9 +416,20 @@ class VmTranslator():
         call_num = self.call_counters.get(function_name, 0) + 1
         self.call_counters[function_name] = call_num
 
+        ## push return address label
         ret_address_label = f"{function_name}$ret.{call_num}"
-
-        nl = self.translate_push_value_at_symbol(ret_address_label)
+        nl = [
+            f"// push {ret_address_label}",
+            f"@{ret_address_label}",
+            "D=A", # not M
+            f"// RAM[{SP}] = D",
+            f"@{SP}",
+            "A=M",
+            "M=D",
+            f"// {SP}++",
+            f"@{SP}",
+            "M=M+1",
+        ]
         new_lines.extend(nl)
 
         ## push LCL
@@ -612,7 +624,6 @@ class VmTranslator():
         return new_lines
 
 def main(path, no_bootstrap=False):
-
     if os.path.isfile(path):
         with open(path, "r") as f:
             lines = f.readlines()
@@ -654,7 +665,6 @@ def main(path, no_bootstrap=False):
             raise ValueError("No .vm files found")
 
         out_path = os.path.join(path, f"{os.path.split(path)[-1]}.asm")
-
     else:
         raise ValueError("Unknown path type")
 
