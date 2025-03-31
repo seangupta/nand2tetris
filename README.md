@@ -5,7 +5,7 @@ Steps along the way:
 - Arithmetic logic unit and RAM
 - CPU, memory, Harvard architecture
 - Assembly language and assembler
-- VM and VM-to-assembly translation (in progress)
+- VM and VM-to-assembly translation
 - Compilation (to be added)
 - Operating system (to be added)
 
