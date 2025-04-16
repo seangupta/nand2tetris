@@ -1,0 +1,51 @@
+/** Represents a single square. A block is made up of four squares. */
+class Square {
+    field int x, y; // Location within the 10 x 20 Tetris field
+
+    constructor Square new(int Ax, int Ay){
+        let x = Ax;
+        let y = Ay;
+        do show();
+        return this;
+    }
+
+    /** Deallocates the object's memory. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    /** Shows the square. */
+    method void show() {
+        do Screen.setColor(true);
+        do draw();
+        return;
+    }
+
+    /** Hides the square. */
+    method void hide() {
+        do Screen.setColor(false);
+        do draw();
+        return;
+    }
+
+    /** Draws the square. */
+    method void draw() {
+        do Screen.drawRectangle(
+            196 + (12 * x),
+            16 + (12 * y), 
+            195 + (12 * (x + 1)), 
+            15 + (12 * (y + 1))
+        );
+        return;
+    }
+
+    method void fall() {
+        if (y < 19){
+            do hide();
+            let y = y + 1;
+            do show();
+        }
+    return;
+    }
+}

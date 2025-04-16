@@ -1,0 +1,86 @@
+/**
+ * Represents a Tetris game.
+ */
+class TetrisGame {
+
+    static TetrisGame instance; // A Tetris game
+    field boolean exit;       // true when the game is over     
+    field int num_lines_cleared; // current number of lines cleared
+    field Square square; // test square
+
+    field int line_width; // width of bounding lines
+
+    /** Constructs a new Tetris game. */
+    constructor TetrisGame new() {
+	    do Screen.clearScreen();
+        let num_lines_cleared = 0;
+
+        let line_width = 2;
+        do Screen.drawRectangle(196 - line_width, 16, 195, 255);
+        do Screen.drawRectangle(316, 16, 315 + line_width, 255);
+
+	    do Output.moveCursor(22,0);
+	    do Output.printString("Lines cleared: 0");
+
+        let exit = false;
+	    let num_lines_cleared = 0;
+
+        let square = Square.new(5, 0);
+        do square.draw();
+
+        return this;
+    }
+
+    /** Deallocates the object's memory. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    /** Creates an instance of a Tetris game. */
+    function void newInstance() {
+        let instance = TetrisGame.new();
+        return;
+    }
+    
+    /** Returns this Tetris game. */
+    function TetrisGame getInstance() {
+        return instance;
+    }
+
+    /** Starts the game, and handles input from the user
+    controlling the block's movements.
+    */
+    method void run() {
+        var char key;
+
+        while (~exit) {
+
+            // Waits for a key to be pressed
+            while ((key = 0) & (~exit)){
+                let key = Keyboard.keyPressed();
+                do square.fall();
+                do Sys.wait(50);
+            }
+
+            if (key = 140){
+                let exit = true;
+            }
+
+            // Waits for the key to be released
+            while ((~(key = 0)) & (~exit)){
+                let key = Keyboard.keyPressed();
+                do square.fall();
+                do Sys.wait(50);
+            }
+        }
+
+        if (exit) {
+            do Output.moveCursor(10,27);
+            do Output.printString("Game Over");
+        }
+
+    return;
+    }
+
+}
