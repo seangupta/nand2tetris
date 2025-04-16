@@ -9,6 +9,24 @@ class Square {
         return this;
     }
 
+    method int get_x(){
+        return x;
+    }
+
+    method void set_x(int Ax){
+        let x = Ax;
+        return;
+    }
+
+    method int get_y(){
+        return y;
+    }
+
+    method void set_y(int Ay){
+        let y = Ay;
+        return;
+    }
+
     /** Deallocates the object's memory. */
     method void dispose() {
         do Memory.deAlloc(this);

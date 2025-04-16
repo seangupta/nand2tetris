@@ -6,7 +6,9 @@ class TetrisGame {
     static TetrisGame instance; // A Tetris game
     field boolean exit;       // true when the game is over     
     field int num_lines_cleared; // current number of lines cleared
-    field Square square; // test square
+    // field Square square; // test square
+
+    field LongBlock long_block;
 
     field int line_width; // width of bounding lines
 
@@ -25,8 +27,11 @@ class TetrisGame {
         let exit = false;
 	    let num_lines_cleared = 0;
 
-        let square = Square.new(5, 0);
-        do square.draw();
+        // let square = Square.new(5, 0);
+        // do square.draw();
+
+        let long_block = LongBlock.new(5, 0);
+        do long_block.draw();
 
         return this;
     }
@@ -59,7 +64,8 @@ class TetrisGame {
             // Waits for a key to be pressed
             while ((key = 0) & (~exit)){
                 let key = Keyboard.keyPressed();
-                do square.fall();
+                // do square.fall();
+                do long_block.fall();
                 do Sys.wait(50);
             }
 
@@ -70,7 +76,8 @@ class TetrisGame {
             // Waits for the key to be released
             while ((~(key = 0)) & (~exit)){
                 let key = Keyboard.keyPressed();
-                do square.fall();
+                // do square.fall();
+                do long_block.fall();
                 do Sys.wait(50);
             }
         }
