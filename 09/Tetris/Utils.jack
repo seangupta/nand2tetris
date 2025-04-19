@@ -47,4 +47,21 @@ class Utils {
         return offsets;
     }
 
+    function int mod(int a, int b){
+        var int div, res;
+
+        if (b > 0){
+            let div = a / b;
+            let res = a - (div * b);
+            if (res < 0){
+                let res = res + b;
+            }
+        }
+        else {
+            // Not implemented for negative numbers
+            do Sys.halt();
+        }
+        return res;
+    }
+
 }

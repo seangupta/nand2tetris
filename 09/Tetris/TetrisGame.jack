@@ -4,7 +4,7 @@
 class TetrisGame {
 
     static TetrisGame instance; // A Tetris game
-    static char direction_left, direction_right, direction_up, direction_down;
+    static char direction_left, direction_right, direction_up, direction_down, direction_fall;
 
     field boolean exit;       // true when the game is over     
     field int num_lines_cleared; // current number of lines cleared
@@ -24,10 +24,7 @@ class TetrisGame {
 
     /** Constructs a new Tetris game. */
     constructor TetrisGame new() {
-
-        var int i, j;
-        var Array arr;
-        var String s, t, u, v;
+        var String s, t, u, v, w;
 
         let s = "l";
         let direction_left = s.charAt(0);
@@ -41,6 +38,9 @@ class TetrisGame {
         let v = "d";
         let direction_down = v.charAt(0);
 
+        let w = "f";
+        let direction_fall = w.charAt(0);
+
 	    do Screen.clearScreen();
         let num_lines_cleared = 0;
 
@@ -48,6 +48,8 @@ class TetrisGame {
         let move_delay_ms = 200;
         let field_width = 10;
         let field_height = 20;
+
+        do initialise_map();
 
         do Screen.drawRectangle(196 - line_width, 16, 195, 255);
         do Screen.drawRectangle(316, 16, 315 + line_width, 255);
@@ -57,6 +59,16 @@ class TetrisGame {
 
         let exit = false;
 	    let num_lines_cleared = 0;
+
+        let i_block = IBlock.new(5, -2);
+        do i_block.draw();
+
+        return this;
+    }
+
+    method void initialise_map(){
+        var int i, j;
+        var Array arr;
 
         let map = Array.new(field_height);
         let i = 0;
@@ -70,11 +82,7 @@ class TetrisGame {
             let map[i] = arr;
             let i = i + 1;  
         }
-
-        let i_block = IBlock.new(5, -2);
-        do i_block.draw();
-
-        return this;
+        return;
     }
 
     /** Deallocates the object's memory. */
@@ -173,7 +181,7 @@ class TetrisGame {
             // Waits for a key to be pressed
             while ((key = 0) & (~exit)){
                 let key = Keyboard.keyPressed();
-                do i_block.fall();
+                do move_if_valid(i_block, direction_fall);
                 do Sys.wait(move_delay_ms);
             }
 
@@ -205,28 +213,26 @@ class TetrisGame {
             while ((~(key = 0)) & (~exit)){
                 let key = Keyboard.keyPressed();
                 if (move_left){
-                    let direction = direction_left;
-                    do move_if_valid(i_block, direction);
+                    do move_if_valid(i_block, direction_left);
                 }
                 else {
                     if (move_right){
-                        let direction = direction_right;
-                        do move_if_valid(i_block, direction);
+                        do move_if_valid(i_block, direction_right);
                     }
                     else {
                         if (rotate_up){
-                            do i_block.rotate_up();
+                            do move_if_valid(i_block, direction_up);
                         }
                         else {
                             if (rotate_down){
-                                do i_block.rotate_down();
+                                do move_if_valid(i_block, direction_down);
                             }
                         }
                 }
 
 
                 }
-                do i_block.fall();
+                do move_if_valid(i_block, direction_fall);
                 do Sys.wait(move_delay_ms);
             }
         }
