@@ -5,7 +5,6 @@ class Square {
     constructor Square new(int Ax, int Ay){
         let x = Ax;
         let y = Ay;
-        // do show();
         return this;
     }
 

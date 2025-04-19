@@ -11,13 +11,11 @@ class IBlock {
 
     field int bb_x, bb_y;
 
+    field String s, t, u, v, w;
+
     constructor IBlock new(int Ax, int Ay) {
         // Ax: x coordinate (within Tetris field) of top left bounding box square
-        // Ay: y coordinadate (within Tetris field) of top left bounding box square
-
-        var Square sq0, sq1, sq2, sq3;
-
-        var String s, t, u, v, w;
+        // Ay: y coordinate (within Tetris field) of top left bounding box square
 
         let rotation_zero_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
         let rotation_two_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
@@ -47,26 +45,46 @@ class IBlock {
         let direction_fall = w.charAt(0);
         
         let rotation = 0;
-        
-        let sq0 = Square.new(Ax, Ay + 2);
-        let sq1 = Square.new(Ax + 1, Ay + 2);
-        let sq2 = Square.new(Ax + 2, Ay + 2);
-        let sq3 = Square.new(Ax + 3, Ay + 2);
 
         let bb_x = Ax;
         let bb_y = Ay;
 
         let squares = Array.new(4);
-        let squares[0] = sq0;
-        let squares[1] = sq1;
-        let squares[2] = sq2;
-        let squares[3] = sq3;
+        let squares[0] = Square.new(Ax, Ay + 2);
+        let squares[1] = Square.new(Ax + 1, Ay + 2);
+        let squares[2] = Square.new(Ax + 1, Ay + 2);
+        let squares[3] = Square.new(Ax + 3, Ay + 2);
 
         do show();
         return this;
     }
 
     method void dispose() {
+        var int i;
+        var Square sq;
+
+        let i = 0;
+        while (i < 4){
+            let sq = squares[i];
+            do sq.dispose();
+            let i = i + 1;
+        }
+
+        do Memory.deAlloc(squares);
+
+        do Memory.deAlloc(rotation_zero_offsets);
+        do Memory.deAlloc(rotation_one_offsets);
+        do Memory.deAlloc(rotation_two_offsets);
+        do Memory.deAlloc(rotation_three_offsets);
+
+        do Memory.deAlloc(rotation_offsets_all);
+
+        do Memory.deAlloc(s);
+        do Memory.deAlloc(t);
+        do Memory.deAlloc(u);
+        do Memory.deAlloc(v);
+        do Memory.deAlloc(w);
+
         do Memory.deAlloc(this);
         return;
     }

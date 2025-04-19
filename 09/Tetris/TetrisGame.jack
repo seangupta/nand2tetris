@@ -28,9 +28,10 @@ class TetrisGame {
     // Y x X as we want to iterate through rows to identify cleared lines
     field Array map;
 
+    field String s, t, u, v, w;
+
     /** Constructs a new Tetris game. */
     constructor TetrisGame new() {
-        var String s, t, u, v, w;
 
         let s = "l";
         let direction_left = s.charAt(0);
@@ -90,6 +91,16 @@ class TetrisGame {
 
     /** Deallocates the object's memory. */
     method void dispose() {
+        do Memory.deAlloc(current_block);
+        do Memory.deAlloc(map);
+
+        do Memory.deAlloc(s);
+        do Memory.deAlloc(t);
+        do Memory.deAlloc(u);
+        do Memory.deAlloc(v);
+        do Memory.deAlloc(w);
+
+        do Memory.deAlloc(instance);
         do Memory.deAlloc(this);
         return;
     }
@@ -159,6 +170,21 @@ class TetrisGame {
             do current_block.apply_move(new_coords_all, direction);
             do update_map(new_coords_all, true);
         }
+
+        let i = 0;
+        while (i < 4){
+            do Memory.deAlloc(old_coords_all[i]);
+            let i = i + 1;
+        }
+        do Memory.deAlloc(old_coords_all);
+
+        let i = 0;
+        while (i < 4){
+            do Memory.deAlloc(new_coords_all[i]);
+            let i = i + 1;
+        }
+        do Memory.deAlloc(new_coords_all);
+
         return can_move;
     }
 
@@ -210,8 +236,11 @@ class TetrisGame {
     }
 
     method void handle_current_block() {
+        var int i;
 
         let block_done = false;
+        let i = 0;
+
         while (~block_done){
         
             let move_left = false;
@@ -224,6 +253,10 @@ class TetrisGame {
                 let key = Keyboard.keyPressed();
                 let direction = direction_fall;
                 let block_done = ~move_if_valid(current_block);
+                if ((i = 0) & (block_done)){
+                    let exit = true;
+                }
+                let i = i + 1;
                 do Sys.wait(move_delay_ms);
             }
 
@@ -256,6 +289,10 @@ class TetrisGame {
                 }
                 let direction = direction_fall;
                 let block_done = ~move_if_valid(current_block);
+                if ((i = 0) & (block_done)){
+                    let exit = true;
+                }
+                let i = i + 1;
                 do Sys.wait(move_delay_ms);
             }
         }
