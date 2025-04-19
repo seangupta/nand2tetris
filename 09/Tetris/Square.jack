@@ -60,10 +60,24 @@ class Square {
 
     method void fall() {
         if (y < 19){
-            do hide();
+            // do hide();
             let y = y + 1;
-            do show();
+            // do show();
         }
     return;
+    }
+
+    method void move_left(){
+        if (x > 0){
+            let x = x - 1;
+        }
+        return;
+    }
+
+    method void move_right(){
+        if (x < 9){
+            let x = x + 1;
+        }
+        return;
     }
 }
