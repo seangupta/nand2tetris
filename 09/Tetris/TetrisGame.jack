@@ -30,7 +30,7 @@ class TetrisGame {
         let exit = false;
 	    let num_lines_cleared = 0;
 
-        let i_block = IBlock.new(5, 0);
+        let i_block = IBlock.new(5, -2);
         do i_block.draw();
 
         return this;

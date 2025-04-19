@@ -5,15 +5,17 @@ class IBlock {
     field int rotation; // 0-3 (starts at 0) 
 
     constructor IBlock new(int Ax, int Ay) {
+        // Ax: x coordinate (within Tetris field) of top left bounding box square
+        // Ay: y coordinadate (within Tetris field) of top left bounding box square
 
         var Square sq0, sq1, sq2, sq3;
         
         let rotation = 0;
         
-        let sq0 = Square.new(Ax, Ay);
-        let sq1 = Square.new(Ax + 1, Ay);
-        let sq2 = Square.new(Ax + 2, Ay);
-        let sq3 = Square.new(Ax + 3, Ay);
+        let sq0 = Square.new(Ax, Ay + 2);
+        let sq1 = Square.new(Ax + 1, Ay + 2);
+        let sq2 = Square.new(Ax + 2, Ay + 2);
+        let sq3 = Square.new(Ax + 3, Ay + 2);
 
         let squares = Array.new(4);
         let squares[0] = sq0;
