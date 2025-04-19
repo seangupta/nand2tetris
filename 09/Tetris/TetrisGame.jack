@@ -13,13 +13,26 @@ class TetrisGame {
     field int line_width; // width of bounding lines
     field int move_delay_ms; // Delay between moves
 
+    field int field_width; // width of Tetris field
+    field int field_height; // height of Tetris field
+    
+    // 20 x 10 array showing whether field is empty (= 0) or occupied(= 1)
+    // Y x X as we want to iterate through rows to identify cleared lines
+    field Array map;
+
     /** Constructs a new Tetris game. */
     constructor TetrisGame new() {
+
+        var int i, j;
+        var Array arr;
+
 	    do Screen.clearScreen();
         let num_lines_cleared = 0;
 
         let line_width = 2;
         let move_delay_ms = 200;
+        let field_width = 10;
+        let field_height = 20;
 
         do Screen.drawRectangle(196 - line_width, 16, 195, 255);
         do Screen.drawRectangle(316, 16, 315 + line_width, 255);
@@ -29,6 +42,19 @@ class TetrisGame {
 
         let exit = false;
 	    let num_lines_cleared = 0;
+
+        let map = Array.new(field_height);
+        let i = 0;
+        while (i < field_height){
+            let arr = Array.new(field_width);
+            let j = 0;
+            while (j < field_width){
+                let arr[j] = 0;
+                let j = j + 1;
+            }
+            let map[i] = arr;
+            let i = i + 1;  
+        }
 
         let i_block = IBlock.new(5, -2);
         do i_block.draw();
