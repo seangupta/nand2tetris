@@ -5,7 +5,7 @@ class Square {
     constructor Square new(int Ax, int Ay){
         let x = Ax;
         let y = Ay;
-        do show();
+        // do show();
         return this;
     }
 
@@ -67,6 +67,7 @@ class Square {
     return;
     }
 
+    // TODO: Remove?
     method void move_left(){
         if (x > 0){
             let x = x - 1;

@@ -4,6 +4,8 @@
 class TetrisGame {
 
     static TetrisGame instance; // A Tetris game
+    static char direction_left, direction_right, direction_up, direction_down;
+
     field boolean exit;       // true when the game is over     
     field int num_lines_cleared; // current number of lines cleared
     // field Square square; // test square
@@ -25,6 +27,19 @@ class TetrisGame {
 
         var int i, j;
         var Array arr;
+        var String s, t, u, v;
+
+        let s = "l";
+        let direction_left = s.charAt(0);
+
+        let t = "r";
+        let direction_right = t.charAt(0);
+
+        let u = "u";
+        let direction_up = u.charAt(0);
+
+        let v = "d";
+        let direction_down = v.charAt(0);
 
 	    do Screen.clearScreen();
         let num_lines_cleared = 0;
@@ -49,7 +64,7 @@ class TetrisGame {
             let arr = Array.new(field_width);
             let j = 0;
             while (j < field_width){
-                let arr[j] = 0;
+                let arr[j] = false;
                 let j = j + 1;
             }
             let map[i] = arr;
@@ -79,6 +94,63 @@ class TetrisGame {
         return instance;
     }
 
+    method boolean is_valid_x(int x){
+        return (-1 < x) & (x < field_width);
+    }
+
+    method boolean is_valid_y(int y){
+        return (-1 < y) & (y < field_height);
+    }
+
+    method void update_map(Array coords_all, boolean occupied){
+        var Array coords, map_row;
+        var int i;
+        let i = 0;
+        while (i < 4){
+            let coords = coords_all[i];
+            let map_row = map[coords[1]];
+            let map_row[coords[0]] = occupied;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void move_if_valid(IBlock i_block, char direction){
+        var int i, x_new, y_new;
+        var boolean occupied, can_move;
+        var Array old_coords_all, new_coords_all, new_coords, map_row;
+
+        let old_coords_all = i_block.get_coords();
+        let new_coords_all = i_block.generate_post_move_coordinates(direction);
+
+        let i = 0;
+        let can_move = true;
+        while (i < 4){
+            let new_coords = new_coords_all[i];
+            let x_new = new_coords[0];
+            let y_new = new_coords[1];
+
+            if (is_valid_x(x_new) & (is_valid_y(y_new))){
+                if (~Utils.is_coord_in_coords(new_coords, old_coords_all)){
+                    let map_row = map[y_new];
+                    let occupied = map_row[x_new];
+                    let can_move = can_move & (~(occupied));
+                }
+            }
+            else {
+                let can_move = false;
+            }
+            let i = i + 1;
+        }
+        
+        if (can_move){
+            do update_map(old_coords_all, false);
+            do i_block.apply_move(new_coords_all, direction);
+            do update_map(new_coords_all, true);
+        }
+        return;
+    }
+
     /** Starts the game, and handles input from the user
     controlling the block's movements.
     */
@@ -88,6 +160,8 @@ class TetrisGame {
         var boolean move_right;
         var boolean rotate_up;
         var boolean rotate_down;
+
+        var String direction;
 
         while (~exit) {
 
@@ -131,11 +205,13 @@ class TetrisGame {
             while ((~(key = 0)) & (~exit)){
                 let key = Keyboard.keyPressed();
                 if (move_left){
-                    do i_block.move_left();
+                    let direction = direction_left;
+                    do move_if_valid(i_block, direction);
                 }
                 else {
                     if (move_right){
-                        do i_block.move_right();
+                        let direction = direction_right;
+                        do move_if_valid(i_block, direction);
                     }
                     else {
                         if (rotate_up){

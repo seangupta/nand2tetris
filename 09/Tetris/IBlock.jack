@@ -1,14 +1,44 @@
 /** Represents an I block. */
 
 class IBlock {
+    static char direction_left, direction_right, direction_up, direction_down;
+
     field List squares; // individual component squares (length 4)
     field int rotation; // 0-3 (starts at 0) 
+
+    field Array move_left_offsets, move_right_offsets;
+    field Array rotation_zero_offsets, rotation_one_offsets, rotation_two_offsets, rotation_three_offsets;
+
+    field int bb_x, bb_y;
 
     constructor IBlock new(int Ax, int Ay) {
         // Ax: x coordinate (within Tetris field) of top left bounding box square
         // Ay: y coordinadate (within Tetris field) of top left bounding box square
 
         var Square sq0, sq1, sq2, sq3;
+
+        var String s, t, u, v;
+
+        let move_left_offsets = Utils.create_offsets_list(-1, 2, 0, 2, 1, 2, 2, 2);
+        let move_right_offsets = Utils.create_offsets_list(1, 2, 2, 2, 3, 2, 4, 2);
+
+        let rotation_zero_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
+        let rotation_two_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
+
+        let rotation_one_offsets = Utils.create_offsets_list(2, 0, 2, 1, 2, 2, 2, 3);
+        let rotation_three_offsets = Utils.create_offsets_list(2, 0, 2, 1, 2, 2, 2, 3);
+
+        let s = "l";
+        let direction_left = s.charAt(0);
+
+        let t = "r";
+        let direction_right = t.charAt(0);
+
+        let u = "u";
+        let direction_up = u.charAt(0);
+
+        let v = "d";
+        let direction_down = v.charAt(0);
         
         let rotation = 0;
         
@@ -16,6 +46,9 @@ class IBlock {
         let sq1 = Square.new(Ax + 1, Ay + 2);
         let sq2 = Square.new(Ax + 2, Ay + 2);
         let sq3 = Square.new(Ax + 3, Ay + 2);
+
+        let bb_x = Ax;
+        let bb_y = Ay;
 
         let squares = Array.new(4);
         let squares[0] = sq0;
@@ -73,54 +106,82 @@ class IBlock {
                 let i = i + 1;
             }
 
+            let bb_y = bb_y + 1;
+
             do show();
         }
         return;
     }
 
-    method void move_left(){
+    method Array get_coords(){
+        var Array coords_all, arr;
         var int i;
         var Square sq;
 
-        let sq = squares[0];
-        if (sq.get_x() > 0){
-            do hide();
-
-            let i = 0;
-            while (i < 4) {
-                let sq = squares[i];
-                do sq.move_left();
-                let i = i + 1;
-            }
-
-            do show();
+        let coords_all = Array.new(4);
+        let i = 0;
+        while (i < 4){
+            let sq = squares[i];
+            let arr = Array.new(2);
+            let arr[0] = sq.get_x();
+            let arr[1] = sq.get_y();
+            let coords_all[i] = arr;
+            let i = i + 1;
         }
-        return;
+        return coords_all;
     }
 
-    method void move_right(){
+    method Array generate_post_move_coordinates(char direction){
+        var Array new_coords_all;
         var int i;
+        var Array move_offsets, arr, move_offset;
+
+        if (direction = direction_left){
+            let move_offsets = move_left_offsets;
+        }
+        else {
+            let move_offsets = move_right_offsets;
+        }
+
+        let new_coords_all = Array.new(4);
+
+        let i = 0;
+        while (i < 4){
+            let move_offset = move_offsets[i];
+            let arr = Array.new(2);
+            let arr[0] = bb_x + move_offset[0];
+            let arr[1] = bb_y + move_offset[1];
+            let new_coords_all[i] = arr;
+            let i = i + 1;
+        }
+        return new_coords_all;
+    }
+
+    method void apply_move(Array new_coords_all, char direction){
+        var int i, x_y_new;
         var Square sq;
 
-        let sq = squares[3];
-        if (sq.get_x() < 9){
-            do hide();
+        do hide();
 
-            let i = 0;
-            while (i < 4) {
-                let sq = squares[i];
-                do sq.move_right();
-                let i = i + 1;
-            }
-
-            do show();
+        let i = 0;
+        while (i < 4){
+            let x_y_new = new_coords_all[i];
+            let sq = Square.new(x_y_new[0], x_y_new[1]);
+            let squares[i] = sq;
+            let i = i + 1;
         }
+
+        if (direction = direction_left){
+            let bb_x = bb_x - 1;
+        }
+        else {
+            let bb_x = bb_x + 1;
+        }
+
+        do show();
+       
         return;
     }
-
-    // TODO: Implement method to check if valid
-    // i.e. try movement and check if valid first, then set to
-    // new position
 
     method void rotate_up(){
         var int i, sq0_x, sq0_y;

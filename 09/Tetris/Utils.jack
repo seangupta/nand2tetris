@@ -1,0 +1,50 @@
+/** Utility functions */
+class Utils {
+
+    // Need at least one field for malloc not to allocate size 0
+    field int unused;
+
+    constructor Utils new(){
+        return this;
+    }
+
+    function boolean is_coord_in_coords(Array coord, Array coords){
+        var Arr cand;
+        var boolean coord_found;
+        var int i;
+        let coord_found = false;
+        while (i < 4){
+            let cand = coords[i];
+            if ((coord[0] = cand[0]) & (coord[1] = cand[1])){
+                let coord_found = true;
+            }
+            let i = i + 1;
+        }
+        return coord_found;
+    }
+
+    function Array create_offsets_list(int a, int b, int c, int d, int e, int f, int g, int h){
+        var Array offsets, arr;
+
+        let offsets = Array.new(4);
+        let arr = Array.new(2);
+        let arr[0] = a;
+        let arr[1] = b;
+        let offsets[0] = arr;
+        let arr = Array.new(2);
+        let arr[0] = c;
+        let arr[1] = d;
+        let offsets[1] = arr;
+        let arr = Array.new(2);
+        let arr[0] = e;
+        let arr[1] = f;
+        let offsets[2] = arr;
+        let arr = Array.new(2);
+        let arr[0] = g;
+        let arr[1] = h;
+        let offsets[3] = arr;
+        
+        return offsets;
+    }
+
+}
