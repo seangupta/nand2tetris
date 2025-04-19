@@ -7,10 +7,16 @@ class TetrisGame {
     static char direction_left, direction_right, direction_up, direction_down, direction_fall;
 
     field boolean exit;       // true when the game is over     
-    field int num_lines_cleared; // current number of lines cleared
-    // field Square square; // test square
+    field int num_lines_cleared; // current number of lines num_lines_cleared
 
-    field IBlock i_block;
+    field boolean move_left, move_right, rotate_up, rotate_down;
+
+    field boolean block_done; // when the handling of the current block is finished
+
+    field int key;
+    field char direction;
+
+    field IBlock current_block;
 
     field int line_width; // width of bounding lines
     field int move_delay_ms; // Delay between moves
@@ -59,9 +65,6 @@ class TetrisGame {
 
         let exit = false;
 	    let num_lines_cleared = 0;
-
-        let i_block = IBlock.new(5, -2);
-        do i_block.draw();
 
         return this;
     }
@@ -123,13 +126,13 @@ class TetrisGame {
         return;
     }
 
-    method void move_if_valid(IBlock i_block, char direction){
+    method boolean move_if_valid(IBlock current_block){
         var int i, x_new, y_new;
         var boolean occupied, can_move;
         var Array old_coords_all, new_coords_all, new_coords, map_row;
 
-        let old_coords_all = i_block.get_coords();
-        let new_coords_all = i_block.generate_post_move_coordinates(direction);
+        let old_coords_all = current_block.get_coords();
+        let new_coords_all = current_block.generate_post_move_coordinates(direction);
 
         let i = 0;
         let can_move = true;
@@ -153,40 +156,15 @@ class TetrisGame {
         
         if (can_move){
             do update_map(old_coords_all, false);
-            do i_block.apply_move(new_coords_all, direction);
+            do current_block.apply_move(new_coords_all, direction);
             do update_map(new_coords_all, true);
         }
-        return;
+        return can_move;
     }
 
-    /** Starts the game, and handles input from the user
-    controlling the block's movements.
-    */
-    method void run() {
-        var char key;
-        var boolean move_left;
-        var boolean move_right;
-        var boolean rotate_up;
-        var boolean rotate_down;
-
-        var String direction;
-
-        while (~exit) {
-
-            let move_left = false;
-            let move_right = false;
-            let rotate_up = false;
-            let rotate_down = false;
-
-            // Waits for a key to be pressed
-            while ((key = 0) & (~exit)){
-                let key = Keyboard.keyPressed();
-                do move_if_valid(i_block, direction_fall);
-                do Sys.wait(move_delay_ms);
-            }
-
-            if (key = 140){
-                let exit = true;
+    method void key_to_action(int key) {
+        if (key = 140){
+            let exit = true;
             }
             else {
                 if (key = 130){
@@ -208,33 +186,19 @@ class TetrisGame {
                     }
                 }
             }
-
-            // Waits for the key to be released
-            while ((~(key = 0)) & (~exit)){
-                let key = Keyboard.keyPressed();
-                if (move_left){
-                    do move_if_valid(i_block, direction_left);
-                }
-                else {
-                    if (move_right){
-                        do move_if_valid(i_block, direction_right);
-                    }
-                    else {
-                        if (rotate_up){
-                            do move_if_valid(i_block, direction_up);
-                        }
-                        else {
-                            if (rotate_down){
-                                do move_if_valid(i_block, direction_down);
-                            }
-                        }
-                }
+        return;
+    }
 
 
-                }
-                do move_if_valid(i_block, direction_fall);
-                do Sys.wait(move_delay_ms);
-            }
+    /** Starts the game, and handles input from the user
+    controlling the block's movements.
+    */
+    method void run() {
+        while (~exit) {
+            let current_block = IBlock.new(5, -2);
+            do current_block.show();
+            do handle_current_block();
+            do current_block.dispose();
         }
 
         if (exit) {
@@ -243,6 +207,59 @@ class TetrisGame {
         }
 
     return;
+    }
+
+    method void handle_current_block() {
+
+        let block_done = false;
+        while (~block_done){
+        
+            let move_left = false;
+            let move_right = false;
+            let rotate_up = false;
+            let rotate_down = false;
+
+            // Waits for a key to be pressed
+            while ((key = 0) & (~exit) & (~block_done)){
+                let key = Keyboard.keyPressed();
+                let direction = direction_fall;
+                let block_done = ~move_if_valid(current_block);
+                do Sys.wait(move_delay_ms);
+            }
+
+            do key_to_action(key);
+
+            // Waits for the key to be released
+            while ((~(key = 0)) & (~exit) & (~block_done)){
+                let key = Keyboard.keyPressed();
+                if (move_left){
+                    let direction = direction_left;
+                    do move_if_valid(current_block);
+                }
+                else {
+                    if (move_right){
+                        let direction = direction_right;
+                        do move_if_valid(current_block);
+                    }
+                    else {
+                        if (rotate_up){
+                            let direction = direction_up;
+                            do move_if_valid(current_block);
+                        }
+                        else {
+                            if (rotate_down){
+                                let direction = direction_down;
+                                do move_if_valid(current_block);
+                            }
+                        }
+                    }
+                }
+                let direction = direction_fall;
+                let block_done = ~move_if_valid(current_block);
+                do Sys.wait(move_delay_ms);
+            }
+        }
+        return;
     }
 
 }
