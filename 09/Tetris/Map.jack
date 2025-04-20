@@ -1,0 +1,144 @@
+class Map {
+    field int field_width; // width of Tetris field
+    field int field_height; // height of Tetris field
+    field array map;
+
+    constructor Map initialise_map(){
+        var int i, j;
+        var Array arr;
+
+        let field_width = 10;
+        let field_height = 20;
+
+        let map = Array.new(field_height);
+        let i = 0;
+        while (i < field_height){
+            let arr = Array.new(field_width);
+            let j = 0;
+            while (j < field_width){
+                let arr[j] = false;
+                let j = j + 1;
+            }
+            let map[i] = arr;
+            let i = i + 1;  
+        }
+        return this;
+    }
+
+    method Array get_map(){
+        return map;
+    }
+
+    method Arry get_map_row(int y){
+        return map[y];
+    }
+
+    method void dispose(){
+        do Memory.deAlloc(map);
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    method boolean is_valid_x(int x){
+        return (-1 < x) & (x < field_width);
+    }
+
+    method boolean is_valid_y(int y){
+        return (-1 < y) & (y < field_height);
+    }
+
+    method void update(Array coords_all, boolean occupied){
+        var Array coords, map_row;
+        var int i;
+        let i = 0;
+        while (i < 4){
+            let coords = coords_all[i];
+            let map_row = map[coords[1]];
+            let map_row[coords[0]] = occupied;
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void potentially_clear_lines() {
+        var int i, j;
+        var boolean should_clear_line;
+        var Array map_row;
+
+        let i = 0;
+        while (i < field_height){
+            let map_row = map[i];
+            let j = 0;
+            let should_clear_line = true;
+            while ((j < field_width) & (should_clear_line)){
+                if (~map_row[j]){
+                    let should_clear_line = false;
+                }
+                let j = j + 1;
+            }
+
+            if (should_clear_line){
+                do clear_line(i);
+                // make squares above fall
+            }
+
+            let i = i + 1;
+        }
+        return;
+    }
+
+    method void draw(){
+        var int x, y;
+        var Array map_row;
+
+        // hide everything
+        do Screen.setColor(false);
+        do Screen.drawRectangle(196, 16, 315, 255);
+
+        // draw occupied squares
+        do Screen.setColor(true);
+        let y = 0;
+        while (y < field_height){
+            let map_row = map[y];
+            let x = 0;
+            while (x < field_width){  
+                if (map_row[x]){
+                    do Screen.drawRectangle(
+                        196 + (12 * x),
+                        16 + (12 * y), 
+                        195 + (12 * (x + 1)), 
+                        15 + (12 * (y + 1))
+                    );
+                }
+
+                let x = x + 1;
+            }
+            let y = y + 1;
+        }
+        return;
+    }
+
+    method void clear_line(int i){
+        var int j;
+        var Array map_row;
+
+        // update map
+        let map_row = map[i];
+        let j = 0;
+        while (j < field_width){
+            let map_row[j] = false;
+            let j = j + 1;
+        }
+
+        do Screen.setColor(false);
+        do Screen.drawRectangle(
+            196,
+            16 + (12 * i), 
+            315, 
+            15 + (12 * (i + 1))
+        );
+        return;
+    }
+
+
+}

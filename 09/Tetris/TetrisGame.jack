@@ -20,13 +20,10 @@ class TetrisGame {
 
     field int line_width; // width of bounding lines
     field int move_delay_ms; // Delay between moves
-
-    field int field_width; // width of Tetris field
-    field int field_height; // height of Tetris field
     
     // 20 x 10 array showing whether field is empty (= 0) or occupied(= 1)
     // Y x X as we want to iterate through rows to identify cleared lines
-    field Array map;
+    field Map map;
 
     field String s, t, u, v, w;
 
@@ -53,10 +50,8 @@ class TetrisGame {
 
         let line_width = 2;
         let move_delay_ms = 200;
-        let field_width = 10;
-        let field_height = 20;
 
-        do initialise_map();
+        let map = Map.initialise_map();
 
         do Screen.drawRectangle(196 - line_width, 16, 195, 255);
         do Screen.drawRectangle(316, 16, 315 + line_width, 255);
@@ -70,29 +65,10 @@ class TetrisGame {
         return this;
     }
 
-    method void initialise_map(){
-        var int i, j;
-        var Array arr;
-
-        let map = Array.new(field_height);
-        let i = 0;
-        while (i < field_height){
-            let arr = Array.new(field_width);
-            let j = 0;
-            while (j < field_width){
-                let arr[j] = false;
-                let j = j + 1;
-            }
-            let map[i] = arr;
-            let i = i + 1;  
-        }
-        return;
-    }
-
     /** Deallocates the object's memory. */
     method void dispose() {
         do Memory.deAlloc(current_block);
-        do Memory.deAlloc(map);
+        do map.dispose();
 
         do Memory.deAlloc(s);
         do Memory.deAlloc(t);
@@ -116,27 +92,6 @@ class TetrisGame {
         return instance;
     }
 
-    method boolean is_valid_x(int x){
-        return (-1 < x) & (x < field_width);
-    }
-
-    method boolean is_valid_y(int y){
-        return (-1 < y) & (y < field_height);
-    }
-
-    method void update_map(Array coords_all, boolean occupied){
-        var Array coords, map_row;
-        var int i;
-        let i = 0;
-        while (i < 4){
-            let coords = coords_all[i];
-            let map_row = map[coords[1]];
-            let map_row[coords[0]] = occupied;
-            let i = i + 1;
-        }
-        return;
-    }
-
     method boolean move_if_valid(IBlock current_block){
         var int i, x_new, y_new;
         var boolean occupied, can_move;
@@ -152,9 +107,9 @@ class TetrisGame {
             let x_new = new_coords[0];
             let y_new = new_coords[1];
 
-            if (is_valid_x(x_new) & (is_valid_y(y_new))){
+            if (map.is_valid_x(x_new) & (map.is_valid_y(y_new))){
                 if (~Utils.is_coord_in_coords(new_coords, old_coords_all)){
-                    let map_row = map[y_new];
+                    let map_row = map.get_map_row(y_new);
                     let occupied = map_row[x_new];
                     let can_move = can_move & (~(occupied));
                 }
@@ -166,9 +121,9 @@ class TetrisGame {
         }
         
         if (can_move){
-            do update_map(old_coords_all, false);
+            do map.update(old_coords_all, false);
             do current_block.apply_move(new_coords_all, direction);
-            do update_map(new_coords_all, true);
+            do map.update(new_coords_all, true);
         }
 
         let i = 0;
@@ -296,6 +251,8 @@ class TetrisGame {
                 do Sys.wait(move_delay_ms);
             }
         }
+
+        do map.potentially_clear_lines();
         return;
     }
 
