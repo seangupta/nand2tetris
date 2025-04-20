@@ -8,6 +8,35 @@ class Utils {
         return this;
     }
 
+    function Array create_zero_array(int size){
+        var Array arr;
+        var int i;
+
+        let arr = Array.new(size);
+        let i = 0;
+        while (i < size){
+            let arr[i] = 0;
+            let i = i + 1;
+        }
+        return arr;
+    }
+
+    function boolean isin_int_array(int x, size n, Array arr){
+        var int i;
+        var boolean found;
+
+        let found = false;
+        let i = 0;
+
+        while ((i < n) & (~found)){
+            if (arr[i] = x){
+                let found = true;
+            }
+            let i = i + 1;
+        }
+        return found;
+    }
+
     function boolean is_coord_in_coords(Array coord, Array coords){
         var Arr cand;
         var boolean coord_found;

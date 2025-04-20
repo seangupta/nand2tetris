@@ -60,10 +60,13 @@ class Map {
         return;
     }
 
-    method void potentially_clear_lines() {
+    method int potentially_clear_lines() {
         var int i, j;
+        var int num_lines_to_clear;
         var boolean should_clear_line;
-        var Array map_row;
+        var Array map_row, lines_to_clear;
+
+        let lines_to_clear = Array.new(field_height);
 
         let i = 0;
         while (i < field_height){
@@ -76,14 +79,49 @@ class Map {
                 }
                 let j = j + 1;
             }
-
+            let lines_to_clear[i] = should_clear_line;
             if (should_clear_line){
-                do clear_line(i);
-                // make squares above fall
+                let num_lines_to_clear = num_lines_to_clear + 1;
             }
-
             let i = i + 1;
         }
+
+        let i = 0;
+        while (i < field_height){
+            if (lines_to_clear[i]){
+                do clear_line(i);
+            }
+            let i = i + 1;
+        }
+
+        do apply_gravity(lines_to_clear);
+        return num_lines_to_clear;
+    }
+
+    method void apply_gravity(Array cleared_lines){
+        // applies naive gravity
+
+        var int y, num_cleared_lines_so_far;
+
+        let num_cleared_lines_so_far = 0;
+        let y = field_height - 1;
+
+        while (y > - 1){
+            if (cleared_lines[y]){
+                let num_cleared_lines_so_far = num_cleared_lines_so_far + 1;
+            }
+
+            if (num_cleared_lines_so_far > 0){
+                if (y - num_cleared_lines_so_far > -1){
+                    let map[y] = map[y - num_cleared_lines_so_far];
+                }
+                else {
+                    let map[y] = Utils.create_zero_array(field_width);
+                }
+            }
+            let y = y - 1;
+        }
+        do draw();
         return;
     }
 
@@ -105,8 +143,8 @@ class Map {
                 if (map_row[x]){
                     do Screen.drawRectangle(
                         196 + (12 * x),
-                        16 + (12 * y), 
-                        195 + (12 * (x + 1)), 
+                        16 + (12 * y),
+                        195 + (12 * (x + 1)),
                         15 + (12 * (y + 1))
                     );
                 }

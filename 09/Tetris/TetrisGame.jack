@@ -7,7 +7,7 @@ class TetrisGame {
     static char direction_left, direction_right, direction_up, direction_down, direction_fall;
 
     field boolean exit;       // true when the game is over     
-    field int num_lines_cleared; // current number of lines num_lines_cleared
+    field int total_lines_cleared;
 
     field boolean move_left, move_right, rotate_up, rotate_down;
 
@@ -46,7 +46,7 @@ class TetrisGame {
         let direction_fall = w.charAt(0);
 
 	    do Screen.clearScreen();
-        let num_lines_cleared = 0;
+        let total_lines_cleared = 0;
 
         let line_width = 2;
         let move_delay_ms = 200;
@@ -60,7 +60,6 @@ class TetrisGame {
 	    do Output.printString("Lines cleared: 0");
 
         let exit = false;
-	    let num_lines_cleared = 0;
 
         return this;
     }
@@ -192,6 +191,7 @@ class TetrisGame {
 
     method void handle_current_block() {
         var int i;
+        var int num_lines_cleared;
 
         let block_done = false;
         let i = 0;
@@ -252,7 +252,12 @@ class TetrisGame {
             }
         }
 
-        do map.potentially_clear_lines();
+        let num_lines_cleared = map.potentially_clear_lines();
+        let total_lines_cleared = total_lines_cleared + num_lines_cleared;
+
+        do Output.moveCursor(22,15);
+	    do Output.printInt(total_lines_cleared);
+
         return;
     }
 
