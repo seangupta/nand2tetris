@@ -19,7 +19,7 @@ class TetrisGame {
     field IBlock current_block;
 
     field int line_width; // width of bounding lines
-    field int move_delay_ms; // Delay between moves
+    field int fall_delay_ms; // Delay between falls
     
     // 20 x 10 array showing whether field is empty (= 0) or occupied(= 1)
     // Y x X as we want to iterate through rows to identify cleared lines
@@ -49,7 +49,7 @@ class TetrisGame {
         let total_lines_cleared = 0;
 
         let line_width = 2;
-        let move_delay_ms = 200;
+        let fall_delay_ms = 300;
 
         let map = Map.initialise_map();
 
@@ -143,7 +143,6 @@ class TetrisGame {
     }
 
     method void key_to_action(int key) {
-
         if (key = 140){
             let exit = true;
             }
@@ -171,7 +170,6 @@ class TetrisGame {
     }
 
     method void act_on_key() {
-
         let move_left = false;
         let move_right = false;
         let rotate_up = false;
@@ -209,37 +207,35 @@ class TetrisGame {
     method void handle_current_block() {
         var int num_falls;
         var int num_lines_cleared;
-        var int num_waits, num_waits_since_last_check;
+        var int num_waits;
+        var boolean key_was_released;
 
         let block_done = false;
         let num_falls = 0;
         let num_waits = 0;
-        let num_waits_since_last_check = 0;
         
         let move_left = false;
         let move_right = false;
         let rotate_up = false;
         let rotate_down = false;
 
-        // TODO: Maybe ignore holding key down situation for now,
-        // and only act on key press and release
+        // Only act on key press and release (cannot keep holding down key)
+        let key_was_released = true;
 
         while ((~exit) & (~block_done)){
 
+            let key = Keyboard.keyPressed();
             if (key = 0){
-                let key = Keyboard.keyPressed();
-                do act_on_key();
+                let key_was_released = true;
             }
             else {
-                if (num_waits_since_last_check > 1000){
-                    let key = Keyboard.keyPressed();
+                if (key_was_released){
                     do act_on_key();
-                    let num_waits_since_last_check = 0;
                 }
+                let key_was_released = false;
             }
-            
 
-            if (Utils.mod(num_waits, 10000) = 0) {
+            if (Utils.mod(num_waits, fall_delay_ms) = 0) {
                 let direction = direction_fall;
                 let block_done = ~move_if_valid(current_block);
                 if ((num_falls = 0) & (block_done)){
@@ -250,7 +246,6 @@ class TetrisGame {
 
             do Sys.wait(1);
             let num_waits = num_waits + 1;
-            let num_waits_since_last_check = num_waits_since_last_check + 1;
         }
 
         let num_lines_cleared = map.potentially_clear_lines();
