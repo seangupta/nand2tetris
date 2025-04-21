@@ -143,6 +143,7 @@ class TetrisGame {
     }
 
     method void key_to_action(int key) {
+
         if (key = 140){
             let exit = true;
             }
@@ -169,6 +170,98 @@ class TetrisGame {
         return;
     }
 
+    method void act_on_key() {
+
+        let move_left = false;
+        let move_right = false;
+        let rotate_up = false;
+        let rotate_down = false;
+
+        do key_to_action(key);
+
+        if (move_left){
+            let direction = direction_left;
+            do move_if_valid(current_block);
+        }
+        else {
+            if (move_right){
+                let direction = direction_right;
+                do move_if_valid(current_block);
+            }
+            else {
+                if (rotate_up){
+                    let direction = direction_up;
+                    do move_if_valid(current_block);
+                }
+                else {
+                    if (rotate_down){
+                        let direction = direction_down;
+                        do move_if_valid(current_block);
+                    }
+                }
+            }
+        }
+
+        return;
+    }
+
+
+    method void handle_current_block() {
+        var int num_falls;
+        var int num_lines_cleared;
+        var int num_waits, num_waits_since_last_check;
+
+        let block_done = false;
+        let num_falls = 0;
+        let num_waits = 0;
+        let num_waits_since_last_check = 0;
+        
+        let move_left = false;
+        let move_right = false;
+        let rotate_up = false;
+        let rotate_down = false;
+
+        // TODO: Maybe ignore holding key down situation for now,
+        // and only act on key press and release
+
+        while ((~exit) & (~block_done)){
+
+            if (key = 0){
+                let key = Keyboard.keyPressed();
+                do act_on_key();
+            }
+            else {
+                if (num_waits_since_last_check > 1000){
+                    let key = Keyboard.keyPressed();
+                    do act_on_key();
+                    let num_waits_since_last_check = 0;
+                }
+            }
+            
+
+            if (Utils.mod(num_waits, 10000) = 0) {
+                let direction = direction_fall;
+                let block_done = ~move_if_valid(current_block);
+                if ((num_falls = 0) & (block_done)){
+                    let exit = true;
+                }
+                let num_falls = num_falls + 1;
+            }
+
+            do Sys.wait(1);
+            let num_waits = num_waits + 1;
+            let num_waits_since_last_check = num_waits_since_last_check + 1;
+        }
+
+        let num_lines_cleared = map.potentially_clear_lines();
+        let total_lines_cleared = total_lines_cleared + num_lines_cleared;
+
+        do Output.moveCursor(22,15);
+	    do Output.printInt(total_lines_cleared);
+
+        return;
+    }
+
 
     /** Starts the game, and handles input from the user
     controlling the block's movements.
@@ -187,78 +280,6 @@ class TetrisGame {
         }
 
     return;
-    }
-
-    method void handle_current_block() {
-        var int i;
-        var int num_lines_cleared;
-
-        let block_done = false;
-        let i = 0;
-
-        while (~block_done){
-        
-            let move_left = false;
-            let move_right = false;
-            let rotate_up = false;
-            let rotate_down = false;
-
-            // Waits for a key to be pressed
-            while ((key = 0) & (~exit) & (~block_done)){
-                let key = Keyboard.keyPressed();
-                let direction = direction_fall;
-                let block_done = ~move_if_valid(current_block);
-                if ((i = 0) & (block_done)){
-                    let exit = true;
-                }
-                let i = i + 1;
-                do Sys.wait(move_delay_ms);
-            }
-
-            do key_to_action(key);
-
-            // Waits for the key to be released
-            while ((~(key = 0)) & (~exit) & (~block_done)){
-                let key = Keyboard.keyPressed();
-                if (move_left){
-                    let direction = direction_left;
-                    do move_if_valid(current_block);
-                }
-                else {
-                    if (move_right){
-                        let direction = direction_right;
-                        do move_if_valid(current_block);
-                    }
-                    else {
-                        if (rotate_up){
-                            let direction = direction_up;
-                            do move_if_valid(current_block);
-                        }
-                        else {
-                            if (rotate_down){
-                                let direction = direction_down;
-                                do move_if_valid(current_block);
-                            }
-                        }
-                    }
-                }
-                let direction = direction_fall;
-                let block_done = ~move_if_valid(current_block);
-                if ((i = 0) & (block_done)){
-                    let exit = true;
-                }
-                let i = i + 1;
-                do Sys.wait(move_delay_ms);
-            }
-        }
-
-        let num_lines_cleared = map.potentially_clear_lines();
-        let total_lines_cleared = total_lines_cleared + num_lines_cleared;
-
-        do Output.moveCursor(22,15);
-	    do Output.printInt(total_lines_cleared);
-
-        return;
     }
 
 }
