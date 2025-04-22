@@ -1,7 +1,7 @@
 /** Represents an I block. */
 
 class IBlock {
-    static char direction_left, direction_right, direction_up, direction_down, direction_fall;
+    static char direction_left, direction_right, direction_down, direction_fall, direction_rotate;
 
     field List squares; // individual component squares (length 4)
     field int rotation; // 0-3 (starts at 0) 
@@ -18,9 +18,8 @@ class IBlock {
         // Ay: y coordinate (within Tetris field) of top left bounding box square
 
         let rotation_zero_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
-        let rotation_two_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
-
         let rotation_one_offsets = Utils.create_offsets_list(2, 0, 2, 1, 2, 2, 2, 3);
+        let rotation_two_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
         let rotation_three_offsets = Utils.create_offsets_list(2, 0, 2, 1, 2, 2, 2, 3);
 
         let rotation_offsets_all = Array.new(4);
@@ -36,7 +35,7 @@ class IBlock {
         let direction_right = t.charAt(0);
 
         let u = "u";
-        let direction_up = u.charAt(0);
+        let direction_rotate = u.charAt(0);
 
         let v = "d";
         let direction_down = v.charAt(0);
@@ -156,12 +155,12 @@ class IBlock {
                     let bb_offset[1] = 1;   
                 }
                 else {
-                    if (direction = direction_up){
+                    if (direction = direction_rotate){
                         let post_move_rotation = Utils.mod(rotation + 1, 4);
                     }
                     else {
                         if (direction = direction_down) {
-                            let post_move_rotation = Utils.mod(rotation - 1, 4);
+                            let bb_offset[1] = 1;
                         }
                     }
                 }
@@ -217,11 +216,11 @@ class IBlock {
                     let bb_y = bb_y + 1;
                 }
                 else {
-                    if (direction = direction_up){
+                    if (direction = direction_rotate){
                         let rotation = Utils.mod(rotation + 1, 4);
                     }
                     else {
-                        let rotation = Utils.mod(rotation - 1, 4);
+                        let bb_y = bb_y + 1;
                     }
                 }
             }
