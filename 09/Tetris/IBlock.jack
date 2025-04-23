@@ -204,7 +204,7 @@ class IBlock {
         while (i < 4){
             let x_y_new = new_coords_all[i];
 
-            // TODO: delloc old square?
+            do Memory.deAlloc(squares[i]);
             let sq = Square.new(x_y_new[0], x_y_new[1]);
             let squares[i] = sq;
             let i = i + 1;
