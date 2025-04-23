@@ -80,9 +80,9 @@ class Map {
         var int i, j;
         var int num_lines_to_clear;
         var boolean should_clear_line;
-        var Array map_row, lines_to_clear;
+        var Array map_row, line_cleared_indicators;
 
-        let lines_to_clear = Array.new(field_height);
+        let line_cleared_indicators = Array.new(field_height);
 
         let i = 0;
         while (i < field_height){
@@ -95,53 +95,90 @@ class Map {
                 }
                 let j = j + 1;
             }
-            let lines_to_clear[i] = should_clear_line;
+
             if (should_clear_line){
+                let line_cleared_indicators[i] = 1;
                 let num_lines_to_clear = num_lines_to_clear + 1;
             }
+            else {
+                let line_cleared_indicators[i] = 0;
+            }
+
             let i = i + 1;
         }
 
         let i = 0;
         while (i < field_height){
-            if (lines_to_clear[i]){
+            if (line_cleared_indicators[i]){
                 do clear_line(i);
             }
             let i = i + 1;
         }
 
-        do apply_gravity(lines_to_clear);
-        do Memory.deAlloc(lines_to_clear);
+        if (num_lines_to_clear > 0){
+            do apply_gravity(line_cleared_indicators);
+        }
+        
+        do Memory.deAlloc(line_cleared_indicators);
         return num_lines_to_clear;
     }
 
     method void apply_gravity(Array line_cleared_indicators){
         // applies naive gravity
-        // TODO: Fix
+        
+        var Arr num_cleared_lines_below, mapped_row, original_row;
+        var int sum_so_far, i, y, mapped_y;
+
+        let num_cleared_lines_below = Array.new(field_height);
+        let num_cleared_lines_below[field_height - 1] = 0;
+
+        let sum_so_far = 0;
+        let i = field_height - 2;
+        while (i > -1){
+            let sum_so_far = sum_so_far + line_cleared_indicators[i + 1];
+            let num_cleared_lines_below[i] = sum_so_far;
+            let i = i - 1;
+        }
+
+        /*
+        do Output.moveCursor(3,40);
+        let i = 0;
+        while (i < field_height){
+            do Output.printInt(line_cleared_indicators[i]);
+            let i = i + 1;
+        }
+        do Sys.wait(5000);
+
+        do Output.moveCursor(4,40);
+        let i = 0;
+        while (i < field_height){
+            do Output.printInt(num_cleared_lines_below[i]);
+            let i = i + 1;
+        }
+        do Sys.wait(5000);
+        */
 
 
-        var int y, num_cleared_lines_so_far;
-
-        let num_cleared_lines_so_far = 0;
+        // Need to start from the bottom
         let y = field_height - 1;
-
-        while (y > - 1){
-            if (line_cleared_indicators[y]){
-                let num_cleared_lines_so_far = num_cleared_lines_so_far + 1;
+        while (y > -1){
+            let mapped_y = y + num_cleared_lines_below[y];
+            if (mapped_y > (field_height - 1)){
+                do Sys.halt();
             }
 
-            if (num_cleared_lines_so_far > 0){
-                if (y - num_cleared_lines_so_far > -1){
-                    let map[y] = map[y - num_cleared_lines_so_far];
-                }
-                else {
-                    // TODO: Deallocate?
-                    let map[y] = Utils.create_zero_array(field_width);
-                }
+            let i = 0;
+            while (i < field_width){
+                let mapped_row = get_map_row(mapped_y);
+                let original_row = get_map_row(y);
+                let mapped_row[i] = original_row[i];
+                let i = i + 1;
             }
             let y = y - 1;
         }
+        
         do draw();
+        do Memory.deAlloc(num_cleared_lines_below);
         return;
     }
 
