@@ -1,7 +1,7 @@
 /** Represents an I block. */
 
 class IBlock {
-    static char direction_left, direction_right, direction_down, direction_fall, direction_rotate;
+    static char direction_left, direction_right, direction_down, direction_fall, direction_rotate, direction_hard_drop;
 
     field List squares; // individual component squares (length 4)
     field int rotation; // 0-3 (starts at 0) 
@@ -11,7 +11,7 @@ class IBlock {
 
     field int bb_x, bb_y;
 
-    field String s, t, u, v, w;
+    field String s, t, u, v, w, x;
 
     constructor IBlock new(int Ax, int Ay) {
         // Ax: x coordinate (within Tetris field) of top left bounding box square
@@ -42,6 +42,16 @@ class IBlock {
 
         let w = "f";
         let direction_fall = w.charAt(0);
+
+        let x = "h";
+        let direction_hard_drop = x.charAt(0);
+
+        do Memory.deAlloc(s);
+        do Memory.deAlloc(t);
+        do Memory.deAlloc(u);
+        do Memory.deAlloc(v);
+        do Memory.deAlloc(w);
+        do Memory.deAlloc(x);
         
         let rotation = 0;
 
@@ -51,7 +61,7 @@ class IBlock {
         let squares = Array.new(4);
         let squares[0] = Square.new(Ax, Ay + 2);
         let squares[1] = Square.new(Ax + 1, Ay + 2);
-        let squares[2] = Square.new(Ax + 1, Ay + 2);
+        let squares[2] = Square.new(Ax + 2, Ay + 2);
         let squares[3] = Square.new(Ax + 3, Ay + 2);
 
         do show();
@@ -77,12 +87,6 @@ class IBlock {
         do Memory.deAlloc(rotation_three_offsets);
 
         do Memory.deAlloc(rotation_offsets_all);
-
-        do Memory.deAlloc(s);
-        do Memory.deAlloc(t);
-        do Memory.deAlloc(u);
-        do Memory.deAlloc(v);
-        do Memory.deAlloc(w);
 
         do Memory.deAlloc(this);
         return;
@@ -133,9 +137,8 @@ class IBlock {
     }
 
     method Array generate_post_move_coordinates(char direction){
-        var Array new_coords_all;
+        var Array new_coords_all, move_offsets, arr, move_offset, bb_offset;
         var int i, post_move_rotation, bb_x_new, bb_y_new;
-        var Array move_offsets, arr, move_offset, bb_offset;
 
         let bb_offset = Array.new(2);
         let bb_offset[0] = 0;
@@ -187,10 +190,11 @@ class IBlock {
             let new_coords_all[i] = arr;
             let i = i + 1;
         }
+        do Memory.deAlloc(bb_offset);
         return new_coords_all;
     }
 
-    method void apply_move(Array new_coords_all, char direction){
+    method void apply_move(Array new_coords_all, char direction, int drop_length){
         var int i, x_y_new;
         var Square sq;
 
@@ -199,6 +203,8 @@ class IBlock {
         let i = 0;
         while (i < 4){
             let x_y_new = new_coords_all[i];
+
+            // TODO: delloc old square?
             let sq = Square.new(x_y_new[0], x_y_new[1]);
             let squares[i] = sq;
             let i = i + 1;
@@ -212,7 +218,7 @@ class IBlock {
                 let bb_x = bb_x + 1;
             }
             else {
-                if (direction = direction_fall){
+                if ((direction = direction_fall) | (direction = direction_down)){
                     let bb_y = bb_y + 1;
                 }
                 else {
@@ -220,7 +226,9 @@ class IBlock {
                         let rotation = Utils.mod(rotation + 1, 4);
                     }
                     else {
-                        let bb_y = bb_y + 1;
+                        if (direction = direction_hard_drop){
+                            let bb_y = bb_y + drop_length;
+                        }
                     }
                 }
             }

@@ -29,8 +29,18 @@ class Map {
         return map;
     }
 
-    method Arry get_map_row(int y){
+    method int get_field_height(){
+        return field_height;
+    }
+
+    method Array get_map_row(int y){
         return map[y];
+    }
+
+    method int get_map_coords(int y, int x){
+        var Array map_row;
+        let map_row = get_map_row(y);
+        return map_row[x];
     }
 
     method void dispose(){
@@ -47,14 +57,20 @@ class Map {
         return (-1 < y) & (y < field_height);
     }
 
+    method void update_single(int x, int y, boolean occupied){
+        var Array map_row;
+        let map_row = get_map_row(y);
+        let map_row[x] = occupied;
+        return;
+    }
+
     method void update(Array coords_all, boolean occupied){
-        var Array coords, map_row;
+        var Array coords;
         var int i;
         let i = 0;
         while (i < 4){
             let coords = coords_all[i];
-            let map_row = map[coords[1]];
-            let map_row[coords[0]] = occupied;
+            do update_single(coords[0], coords[1], occupied);
             let i = i + 1;
         }
         return;
@@ -95,11 +111,14 @@ class Map {
         }
 
         do apply_gravity(lines_to_clear);
+        do Memory.deAlloc(lines_to_clear);
         return num_lines_to_clear;
     }
 
-    method void apply_gravity(Array cleared_lines){
+    method void apply_gravity(Array line_cleared_indicators){
         // applies naive gravity
+        // TODO: Fix
+
 
         var int y, num_cleared_lines_so_far;
 
@@ -107,7 +126,7 @@ class Map {
         let y = field_height - 1;
 
         while (y > - 1){
-            if (cleared_lines[y]){
+            if (line_cleared_indicators[y]){
                 let num_cleared_lines_so_far = num_cleared_lines_so_far + 1;
             }
 
@@ -116,6 +135,7 @@ class Map {
                     let map[y] = map[y - num_cleared_lines_so_far];
                 }
                 else {
+                    // TODO: Deallocate?
                     let map[y] = Utils.create_zero_array(field_width);
                 }
             }
@@ -178,5 +198,9 @@ class Map {
         return;
     }
 
-
+    /* 
+    method void debug_print(){
+           
+    }
+    */
 }
