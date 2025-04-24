@@ -25,10 +25,9 @@ class TetrisGame {
     // Y x X as we want to iterate through rows to identify cleared lines
     field Map map;
 
-    field String initial_lines_string, s, t, u, v, w, x;
-
     /** Constructs a new Tetris game. */
     constructor TetrisGame new() {
+        var String initial_lines_string, start_game_string, s, t, u, v, w, x;
 
         let s = "l";
         let direction_left = s.charAt(0);
@@ -70,6 +69,11 @@ class TetrisGame {
         let initial_lines_string = "Lines cleared: 0";
 	    do Output.printString(initial_lines_string);
         do Memory.deAlloc(initial_lines_string);
+
+        let start_game_string = "Press Enter!";
+        do Output.moveCursor(10, 26);
+        do Output.printString(start_game_string);
+        do Memory.deAlloc(start_game_string);
 
         let exit = false;
 
@@ -420,7 +424,22 @@ class TetrisGame {
     controlling the block's movements.
     */
     method void run() {
-        var String game_over_string;
+        var String erase_string, game_over_string;
+        var boolean start_game;
+        var int key;
+
+        let start_game = false;
+        while (~start_game) {
+            let key = Keyboard.keyPressed();
+            if (key = 128){
+                let start_game = true;
+            }
+        }
+        
+        do Output.moveCursor(10, 26);
+        let erase_string = "            ";
+        do Output.printString(erase_string);
+        do Memory.deAlloc(erase_string);
 
         while (~exit) {
             let current_block = IBlock.new(5, -2);
@@ -430,8 +449,8 @@ class TetrisGame {
         }
 
         if (exit) {
-            do Output.moveCursor(10,27);
-            let game_over_string = "Game Over";
+            do Output.moveCursor(10, 27);
+            let game_over_string = "Game Over!";
             do Output.printString(game_over_string);
             do Memory.deAlloc(game_over_string);
         }
