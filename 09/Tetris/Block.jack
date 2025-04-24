@@ -1,6 +1,6 @@
-/** Represents an I block. */
+/** Represents a block. */
 
-class IBlock {
+class Block {
     static char direction_left, direction_right, direction_down, direction_fall, direction_rotate, direction_hard_drop;
 
     field List squares; // individual component squares (length 4)
@@ -13,7 +13,7 @@ class IBlock {
 
     field String s, t, u, v, w, x;
 
-    constructor IBlock new(int Ax, int Ay) {
+    constructor Block new_block_i(int Ax, int Ay) {
         // Ax: x coordinate (within Tetris field) of top left bounding box square
         // Ay: y coordinate (within Tetris field) of top left bounding box square
 
@@ -63,6 +63,61 @@ class IBlock {
         let squares[1] = Square.new(Ax + 1, Ay + 2);
         let squares[2] = Square.new(Ax + 2, Ay + 2);
         let squares[3] = Square.new(Ax + 3, Ay + 2);
+
+        do show();
+        return this;
+    }
+
+    constructor Block new_block_o(int Ax, int Ay) {
+        // Ax: x coordinate (within Tetris field) of top left bounding box square
+        // Ay: y coordinate (within Tetris field) of top left bounding box square
+
+        let rotation_zero_offsets = Utils.create_offsets_list(1, 1, 1, 2, 2, 1, 2, 2);
+        let rotation_one_offsets = Utils.create_offsets_list(1, 1, 1, 2, 2, 1, 2, 2);
+        let rotation_two_offsets = Utils.create_offsets_list(1, 1, 1, 2, 2, 1, 2, 2);
+        let rotation_three_offsets = Utils.create_offsets_list(1, 1, 1, 2, 2, 1, 2, 2);
+
+        let rotation_offsets_all = Array.new(4);
+        let rotation_offsets_all[0] = rotation_zero_offsets;
+        let rotation_offsets_all[1] = rotation_one_offsets;
+        let rotation_offsets_all[2] = rotation_two_offsets;
+        let rotation_offsets_all[3] = rotation_three_offsets;
+
+        let s = "l";
+        let direction_left = s.charAt(0);
+
+        let t = "r";
+        let direction_right = t.charAt(0);
+
+        let u = "u";
+        let direction_rotate = u.charAt(0);
+
+        let v = "d";
+        let direction_down = v.charAt(0);
+
+        let w = "f";
+        let direction_fall = w.charAt(0);
+
+        let x = "h";
+        let direction_hard_drop = x.charAt(0);
+
+        do Memory.deAlloc(s);
+        do Memory.deAlloc(t);
+        do Memory.deAlloc(u);
+        do Memory.deAlloc(v);
+        do Memory.deAlloc(w);
+        do Memory.deAlloc(x);
+        
+        let rotation = 0;
+
+        let bb_x = Ax;
+        let bb_y = Ay;
+
+        let squares = Array.new(4);
+        let squares[0] = Square.new(Ax + 1, Ay + 1);
+        let squares[1] = Square.new(Ax + 1, Ay + 2);
+        let squares[2] = Square.new(Ax + 2, Ay + 1);
+        let squares[3] = Square.new(Ax + 2, Ay + 2);
 
         do show();
         return this;

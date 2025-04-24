@@ -41,7 +41,7 @@ class Utils {
         var Arr cand;
         var boolean coord_found;
         var int i;
-        
+
         let coord_found = false;
         while (i < 4){
             let cand = coords[i];

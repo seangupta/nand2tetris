@@ -16,7 +16,7 @@ class TetrisGame {
     field int key;
     field char direction;
 
-    field IBlock current_block;
+    field Block current_block;
 
     field int line_width; // width of bounding lines
     field int fall_delay_ms; // Delay between falls
@@ -162,7 +162,7 @@ class TetrisGame {
         return ret_arr;
     }
 
-    method boolean move_if_valid(IBlock current_block){
+    method boolean move_if_valid(Block current_block){
         var int i, x_new, y_new;
         var boolean occupied, can_move;
         var Array old_coords_all, new_coords_all, new_coords, map_row;
@@ -213,7 +213,7 @@ class TetrisGame {
         return can_move;
     }
 
-    method void move_if_valid_hard_drop(IBlock current_block) {
+    method void move_if_valid_hard_drop(Block current_block) {
         var int drop_length, i;
         var Array old_coords_all, new_coords_all, ret_arr;
         // var Array c;
@@ -426,7 +426,8 @@ class TetrisGame {
     method void run() {
         var String erase_string, game_over_string;
         var boolean start_game;
-        var int key;
+        var int key, random_number, random_number_bucketed;
+        var Rng rng;
 
         let start_game = false;
         while (~start_game) {
@@ -441,8 +442,19 @@ class TetrisGame {
         do Output.printString(erase_string);
         do Memory.deAlloc(erase_string);
 
+        let rng = Rng.new();
+
         while (~exit) {
-            let current_block = IBlock.new(5, -2);
+            let random_number = rng.next();
+            let random_number_bucketed = rng.random_to_one_to_n(random_number, 2);
+            if (random_number_bucketed = 0){
+                let current_block = Block.new_block_i(5, -2);
+            }
+            else {
+                let current_block = Block.new_block_o(5, -2);
+            }
+
+            
             do current_block.show();
             do handle_current_block();
             do current_block.dispose();

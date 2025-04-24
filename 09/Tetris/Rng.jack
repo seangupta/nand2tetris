@@ -1,0 +1,28 @@
+/** Random number generator */
+class Rng {
+    field int current, a, c, m;
+
+    constructor Rng new() {
+        let a = 219;
+        let c = 3;
+        let m = 3276;
+
+        let current = 1;
+        return this;
+    }
+
+    method int next() {
+        let current = Utils.mod(((a * current) + c), m);
+        return current;
+    }
+
+    /* Buckets a random number into a number from 0 to n - 1 */
+    method int random_to_one_to_n(int random_num, int n){
+        var int res;
+        let res = (n * random_num) / m;
+        if ((res < 0) | (res > (n - 1))){
+            do Sys.halt();
+        }
+        return res;
+    }
+}
