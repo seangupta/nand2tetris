@@ -446,7 +446,7 @@ class TetrisGame {
 
         while (~exit) {
             let random_number = rng.next();
-            let random_number_bucketed = rng.random_to_one_to_n(random_number, 6);
+            let random_number_bucketed = rng.random_to_one_to_n(random_number, 7);
             if (random_number_bucketed = 0){
                 let current_block = Block.new_block_i(5, -2);
             }
@@ -467,7 +467,18 @@ class TetrisGame {
                                 let current_block = Block.new_block_s(5, -2);
                             }
                             else {
-                                let current_block = Block.new_block_z(5, -2);
+                                if (random_number_bucketed = 5){
+                                    let current_block = Block.new_block_z(5, -2);
+                                }
+                                else {
+                                    if (random_number_bucketed = 6){
+                                        let current_block = Block.new_block_t(5, -2);
+                                    }
+                                    else {
+                                        do Sys.halt();
+                                    }
+                                }
+                                
                             }
                             
                         }
