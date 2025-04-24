@@ -140,6 +140,34 @@ class Block {
 
 
 
+    constructor Block new_block_l(int Ax, int Ay) {
+        // Ax: x coordinate (within Tetris field) of top left bounding box square
+        // Ay: y coordinate (within Tetris field) of top left bounding box square
+
+        let rotation_zero_offsets = Utils.create_offsets_list(0, 1, 1, 1, 1, 2, 0, 2);
+        let rotation_one_offsets = Utils.create_offsets_list(0, 0, 1, 0, 1, 1, 1, 2);
+        let rotation_two_offsets = Utils.create_offsets_list(2, 0, 0, 1, 1, 1, 2, 1);
+        let rotation_three_offsets = Utils.create_offsets_list(1, 0, 1, 1, 1, 2, 2, 2);
+
+        let rotation_offsets_all = Array.new(4);
+        let rotation_offsets_all[0] = rotation_zero_offsets;
+        let rotation_offsets_all[1] = rotation_one_offsets;
+        let rotation_offsets_all[2] = rotation_two_offsets;
+        let rotation_offsets_all[3] = rotation_three_offsets;
+
+        do initialise();
+
+        let bb_x = Ax;
+        let bb_y = Ay;
+
+        do create_squares();
+
+        do show();
+        return this;
+    }
+
+
+
     method void dispose() {
         var int i;
         var Square sq;
