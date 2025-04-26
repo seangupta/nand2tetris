@@ -384,8 +384,7 @@ class TetrisGame {
             let first_cycle = false;
         }
 
-        // fill white border black again
-        do show_hard_drop_preview();
+        do hide_hard_drop_preview();
 
         let num_lines_cleared = map.potentially_clear_lines();
         let total_lines_cleared = total_lines_cleared + num_lines_cleared;

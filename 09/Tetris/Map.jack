@@ -209,10 +209,10 @@ class Map {
             while (x < field_width){  
                 if (map_row[x]){
                     do Screen.drawRectangle(
-                        196 + (12 * x),
-                        16 + (12 * y),
-                        195 + (12 * (x + 1)),
-                        15 + (12 * (y + 1))
+                        197 + (12 * x),
+                        17 + (12 * y),
+                        194 + (12 * (x + 1)),
+                        14 + (12 * (y + 1))
                     );
                 }
 
@@ -245,9 +245,4 @@ class Map {
         return;
     }
 
-    /* 
-    method void debug_print(){
-           
-    }
-    */
 }
