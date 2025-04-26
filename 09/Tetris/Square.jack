@@ -56,4 +56,45 @@ class Square {
         );
         return;
     }
+
+    method void show_preview() {
+        do Screen.setColor(true);
+        do draw_preview();
+        return;
+    }
+
+    method void hide_preview() {
+        do Screen.setColor(false);
+        do draw_preview();
+        return;
+    }
+
+    method void draw_preview() {
+        do Screen.drawLine(
+            196 + (12 * x),
+            16 + (12 * y),
+            195 + (12 * (x + 1)),
+            16 + (12 * y)
+        );
+        do Screen.drawRectangle(
+            196 + (12 * x),
+            15 + (12 * (y + 1)),
+            195 + (12 * (x + 1)), 
+            15 + (12 * (y + 1))
+        );
+        do Screen.drawRectangle(
+            196 + (12 * x),
+            16 + (12 * y), 
+            196 + (12 * x),
+            15 + (12 * (y + 1))
+        );
+        do Screen.drawRectangle(
+            195 + (12 * (x + 1)),
+            16 + (12 * y), 
+            195 + (12 * (x + 1)), 
+            15 + (12 * (y + 1))
+        );
+        return;
+    }
+
 }

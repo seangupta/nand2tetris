@@ -1,7 +1,7 @@
 class Map {
     field int field_width; // width of Tetris field
     field int field_height; // height of Tetris field
-    field array map;
+    field Array map;
 
     constructor Map initialise_map(){
         var int i, j;
@@ -44,7 +44,17 @@ class Map {
     }
 
     method void dispose(){
+        var int i;
+        var Array arr;
+
+        let i = 0;
+        while (i < field_height) {
+            let arr = map[i];
+            do Memory.deAlloc(arr);
+            let i = i + 1;
+        }
         do Memory.deAlloc(map);
+
         do Memory.deAlloc(this);
         return;
     }

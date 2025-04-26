@@ -53,7 +53,7 @@ class Utils {
         return coord_found;
     }
 
-    function Array create_offsets_list(int a, int b, int c, int d, int e, int f, int g, int h){
+    function Array create_offsets_array(int a, int b, int c, int d, int e, int f, int g, int h){
         var Array offsets, arr;
 
         let offsets = Array.new(4);
@@ -92,6 +92,39 @@ class Utils {
             do Sys.halt();
         }
         return res;
+    }
+
+
+    function void debug_coords(Array coords_array){
+        var Array c;
+        var int i;
+
+        do Output.moveCursor(3,50);
+
+        let i = 0;
+        while (i < 4){
+            let c = coords_array[i];
+            do Output.printInt(c[0]);
+            do Output.printInt(c[1]);
+            let i = i + 1;
+        }
+        do Sys.wait(5000);
+
+        return;
+    }
+
+    /* Disposes of a 4 x 2 array */
+    function void dispose_coords(Array coords_all) {
+        var int i;
+
+        let i = 0;
+        while (i < 4){
+            do Memory.deAlloc(coords_all[i]);
+            let i = i + 1;
+        }
+        do Memory.deAlloc(coords_all);
+
+        return;
     }
 
 }

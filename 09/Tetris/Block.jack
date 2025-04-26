@@ -9,7 +9,10 @@ class Block {
     field Array rotation_zero_offsets, rotation_one_offsets, rotation_two_offsets, rotation_three_offsets;
     field Array rotation_offsets_all;
 
-    field int bb_x, bb_y;
+    field int bb_x; // x coordinate (within Tetris field) of top left bounding box square 
+    field int bb_y; // y coordinate (within Tetris field) of top left bounding box square
+
+    field int initial_bb_x, initial_bb_y;
 
     field String s, t, u, v, w, x;
 
@@ -40,6 +43,10 @@ class Block {
         do Memory.deAlloc(x);
         
         let rotation = 0;
+
+        let bb_x = initial_bb_x;
+        let bb_y = initial_bb_y;
+
         return;
     }
 
@@ -52,21 +59,22 @@ class Block {
         let i = 0;
         while (i < 4){
             let coords = rotation_zero_offsets[i];
-            let squares[i] = Square.new(coords[0], coords[1]);
+            let squares[i] = Square.new(bb_x + coords[0], bb_y + coords[1]);
             let i = i + 1;
         }
 
         return;
     }
 
-    constructor Block new_block_i(int Ax, int Ay) {
-        // Ax: x coordinate (within Tetris field) of top left bounding box square
-        // Ay: y coordinate (within Tetris field) of top left bounding box square
+    constructor Block new_block_i() {
 
-        let rotation_zero_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
-        let rotation_one_offsets = Utils.create_offsets_list(2, 0, 2, 1, 2, 2, 2, 3);
-        let rotation_two_offsets = Utils.create_offsets_list(0, 2, 1, 2, 2, 2, 3, 2);
-        let rotation_three_offsets = Utils.create_offsets_list(2, 0, 2, 1, 2, 2, 2, 3);
+        let initial_bb_x = 3;
+        let initial_bb_y = -2;
+
+        let rotation_zero_offsets = Utils.create_offsets_array(0, 2, 1, 2, 2, 2, 3, 2);
+        let rotation_one_offsets = Utils.create_offsets_array(2, 0, 2, 1, 2, 2, 2, 3);
+        let rotation_two_offsets = Utils.create_offsets_array(0, 2, 1, 2, 2, 2, 3, 2);
+        let rotation_three_offsets = Utils.create_offsets_array(2, 0, 2, 1, 2, 2, 2, 3);
 
         let rotation_offsets_all = Array.new(4);
         let rotation_offsets_all[0] = rotation_zero_offsets;
@@ -75,24 +83,21 @@ class Block {
         let rotation_offsets_all[3] = rotation_three_offsets;
 
         do initialise();
-
-        let bb_x = Ax;
-        let bb_y = Ay;
-
         do create_squares();
-
         do show();
+
         return this;
     }
 
-    constructor Block new_block_o(int Ax, int Ay) {
-        // Ax: x coordinate (within Tetris field) of top left bounding box square
-        // Ay: y coordinate (within Tetris field) of top left bounding box square
+    constructor Block new_block_o() {
 
-        let rotation_zero_offsets = Utils.create_offsets_list(1, 1, 1, 2, 2, 1, 2, 2);
-        let rotation_one_offsets = Utils.create_offsets_list(1, 1, 1, 2, 2, 1, 2, 2);
-        let rotation_two_offsets = Utils.create_offsets_list(1, 1, 1, 2, 2, 1, 2, 2);
-        let rotation_three_offsets = Utils.create_offsets_list(1, 1, 1, 2, 2, 1, 2, 2);
+        let initial_bb_x = 3;
+        let initial_bb_y = -1;
+
+        let rotation_zero_offsets = Utils.create_offsets_array(1, 1, 1, 2, 2, 1, 2, 2);
+        let rotation_one_offsets = Utils.create_offsets_array(1, 1, 1, 2, 2, 1, 2, 2);
+        let rotation_two_offsets = Utils.create_offsets_array(1, 1, 1, 2, 2, 1, 2, 2);
+        let rotation_three_offsets = Utils.create_offsets_array(1, 1, 1, 2, 2, 1, 2, 2);
 
         let rotation_offsets_all = Array.new(4);
         let rotation_offsets_all[0] = rotation_zero_offsets;
@@ -101,25 +106,22 @@ class Block {
         let rotation_offsets_all[3] = rotation_three_offsets;
 
         do initialise();
-
-        let bb_x = Ax;
-        let bb_y = Ay;
-
         do create_squares();
-
         do show();
+
         return this;
     }
 
 
-    constructor Block new_block_j(int Ax, int Ay) {
-        // Ax: x coordinate (within Tetris field) of top left bounding box square
-        // Ay: y coordinate (within Tetris field) of top left bounding box square
+    constructor Block new_block_j() {
 
-        let rotation_zero_offsets = Utils.create_offsets_list(0, 1, 1, 1, 2, 1, 2, 2);
-        let rotation_one_offsets = Utils.create_offsets_list(1, 0, 1, 1, 0, 2, 1, 2);
-        let rotation_two_offsets = Utils.create_offsets_list(0, 0, 0, 1, 1, 1, 2, 1);
-        let rotation_three_offsets = Utils.create_offsets_list(1, 0, 2, 0, 1, 1, 1, 2);
+        let initial_bb_x = 3;
+        let initial_bb_y = -1;
+
+        let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 2, 1, 2, 2);
+        let rotation_one_offsets = Utils.create_offsets_array(1, 0, 1, 1, 0, 2, 1, 2);
+        let rotation_two_offsets = Utils.create_offsets_array(0, 0, 0, 1, 1, 1, 2, 1);
+        let rotation_three_offsets = Utils.create_offsets_array(1, 0, 2, 0, 1, 1, 1, 2);
 
         let rotation_offsets_all = Array.new(4);
         let rotation_offsets_all[0] = rotation_zero_offsets;
@@ -128,26 +130,22 @@ class Block {
         let rotation_offsets_all[3] = rotation_three_offsets;
 
         do initialise();
-
-        let bb_x = Ax;
-        let bb_y = Ay;
-
         do create_squares();
-
         do show();
+
         return this;
     }
 
 
+    constructor Block new_block_l() {
 
-    constructor Block new_block_l(int Ax, int Ay) {
-        // Ax: x coordinate (within Tetris field) of top left bounding box square
-        // Ay: y coordinate (within Tetris field) of top left bounding box square
+        let initial_bb_x = 3;
+        let initial_bb_y = -1;
 
-        let rotation_zero_offsets = Utils.create_offsets_list(0, 1, 1, 1, 1, 2, 0, 2);
-        let rotation_one_offsets = Utils.create_offsets_list(0, 0, 1, 0, 1, 1, 1, 2);
-        let rotation_two_offsets = Utils.create_offsets_list(2, 0, 0, 1, 1, 1, 2, 1);
-        let rotation_three_offsets = Utils.create_offsets_list(1, 0, 1, 1, 1, 2, 2, 2);
+        let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 1, 2, 0, 2);
+        let rotation_one_offsets = Utils.create_offsets_array(0, 0, 1, 0, 1, 1, 1, 2);
+        let rotation_two_offsets = Utils.create_offsets_array(2, 0, 0, 1, 1, 1, 2, 1);
+        let rotation_three_offsets = Utils.create_offsets_array(1, 0, 1, 1, 1, 2, 2, 2);
 
         let rotation_offsets_all = Array.new(4);
         let rotation_offsets_all[0] = rotation_zero_offsets;
@@ -156,24 +154,21 @@ class Block {
         let rotation_offsets_all[3] = rotation_three_offsets;
 
         do initialise();
-
-        let bb_x = Ax;
-        let bb_y = Ay;
-
         do create_squares();
-
         do show();
+
         return this;
     }
 
-    constructor Block new_block_s(int Ax, int Ay) {
-        // Ax: x coordinate (within Tetris field) of top left bounding box square
-        // Ay: y coordinate (within Tetris field) of top left bounding box square
+    constructor Block new_block_s() {
 
-        let rotation_zero_offsets = Utils.create_offsets_list(1, 1, 2, 1, 0, 2, 1, 2);
-        let rotation_one_offsets = Utils.create_offsets_list(1, 0, 1, 1, 2, 1, 2, 2);
-        let rotation_two_offsets = Utils.create_offsets_list(1, 1, 2, 1, 0, 2, 1, 2);
-        let rotation_three_offsets = Utils.create_offsets_list(1, 0, 1, 1, 2, 1, 2, 2);
+        let initial_bb_x = 3;
+        let initial_bb_y = -1;
+
+        let rotation_zero_offsets = Utils.create_offsets_array(1, 1, 2, 1, 0, 2, 1, 2);
+        let rotation_one_offsets = Utils.create_offsets_array(1, 0, 1, 1, 2, 1, 2, 2);
+        let rotation_two_offsets = Utils.create_offsets_array(1, 1, 2, 1, 0, 2, 1, 2);
+        let rotation_three_offsets = Utils.create_offsets_array(1, 0, 1, 1, 2, 1, 2, 2);
 
         let rotation_offsets_all = Array.new(4);
         let rotation_offsets_all[0] = rotation_zero_offsets;
@@ -182,24 +177,21 @@ class Block {
         let rotation_offsets_all[3] = rotation_three_offsets;
 
         do initialise();
-
-        let bb_x = Ax;
-        let bb_y = Ay;
-
         do create_squares();
-
         do show();
+
         return this;
     }
 
-    constructor Block new_block_z(int Ax, int Ay) {
-        // Ax: x coordinate (within Tetris field) of top left bounding box square
-        // Ay: y coordinate (within Tetris field) of top left bounding box square
+    constructor Block new_block_z() {
 
-        let rotation_zero_offsets = Utils.create_offsets_list(0, 1, 1, 1, 1, 2, 2, 2);
-        let rotation_one_offsets = Utils.create_offsets_list(2, 0, 1, 1, 2, 1, 1, 2);
-        let rotation_two_offsets = Utils.create_offsets_list(0, 1, 1, 1, 1, 2, 2, 2);
-        let rotation_three_offsets = Utils.create_offsets_list(2, 0, 1, 1, 2, 1, 1, 2);
+        let initial_bb_x = 3;
+        let initial_bb_y = -1;
+
+        let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 1, 2, 2, 2);
+        let rotation_one_offsets = Utils.create_offsets_array(2, 0, 1, 1, 2, 1, 1, 2);
+        let rotation_two_offsets = Utils.create_offsets_array(0, 1, 1, 1, 1, 2, 2, 2);
+        let rotation_three_offsets = Utils.create_offsets_array(2, 0, 1, 1, 2, 1, 1, 2);
 
         let rotation_offsets_all = Array.new(4);
         let rotation_offsets_all[0] = rotation_zero_offsets;
@@ -208,24 +200,20 @@ class Block {
         let rotation_offsets_all[3] = rotation_three_offsets;
 
         do initialise();
-
-        let bb_x = Ax;
-        let bb_y = Ay;
-
         do create_squares();
-
         do show();
+
         return this;
     }
+    constructor Block new_block_t() {
 
-    constructor Block new_block_t(int Ax, int Ay) {
-        // Ax: x coordinate (within Tetris field) of top left bounding box square
-        // Ay: y coordinate (within Tetris field) of top left bounding box square
+        let initial_bb_x = 3;
+        let initial_bb_y = -1;
 
-        let rotation_zero_offsets = Utils.create_offsets_list(0, 1, 1, 1, 2, 1, 1, 2);
-        let rotation_one_offsets = Utils.create_offsets_list(1, 0, 1, 1, 1, 2, 0, 1);
-        let rotation_two_offsets = Utils.create_offsets_list(0, 1, 1, 1, 2, 1, 1, 0);
-        let rotation_three_offsets = Utils.create_offsets_list(1, 0, 1, 1, 1, 2, 2, 1);
+        let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 2, 1, 1, 2);
+        let rotation_one_offsets = Utils.create_offsets_array(1, 0, 1, 1, 1, 2, 0, 1);
+        let rotation_two_offsets = Utils.create_offsets_array(0, 1, 1, 1, 2, 1, 1, 0);
+        let rotation_three_offsets = Utils.create_offsets_array(1, 0, 1, 1, 1, 2, 2, 1);
 
         let rotation_offsets_all = Array.new(4);
         let rotation_offsets_all[0] = rotation_zero_offsets;
@@ -234,13 +222,9 @@ class Block {
         let rotation_offsets_all[3] = rotation_three_offsets;
 
         do initialise();
-
-        let bb_x = Ax;
-        let bb_y = Ay;
-
         do create_squares();
-
         do show();
+
         return this;
     }
 
@@ -258,10 +242,10 @@ class Block {
 
         do Memory.deAlloc(squares);
 
-        do Memory.deAlloc(rotation_zero_offsets);
-        do Memory.deAlloc(rotation_one_offsets);
-        do Memory.deAlloc(rotation_two_offsets);
-        do Memory.deAlloc(rotation_three_offsets);
+        do Utils.dispose_coords(rotation_zero_offsets);
+        do Utils.dispose_coords(rotation_one_offsets);
+        do Utils.dispose_coords(rotation_two_offsets);
+        do Utils.dispose_coords(rotation_three_offsets);
 
         do Memory.deAlloc(rotation_offsets_all);
 
@@ -381,7 +365,8 @@ class Block {
         while (i < 4){
             let x_y_new = new_coords_all[i];
 
-            do Memory.deAlloc(squares[i]);
+            let sq = squares[i];
+            do sq.dispose();
             let sq = Square.new(x_y_new[0], x_y_new[1]);
             let squares[i] = sq;
             let i = i + 1;
