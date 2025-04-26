@@ -16,6 +16,8 @@ class Block {
 
     field String s, t, u, v, w, x;
 
+    field int block_type;
+
     method void initialise() {
         let s = "l";
         let direction_left = s.charAt(0);
@@ -66,10 +68,43 @@ class Block {
         return;
     }
 
-    constructor Block new_block_i() {
+    method Array get_bb_coords(int size, boolan is_hold) {
+        var Array arr;
 
-        let initial_bb_x = 3;
-        let initial_bb_y = -2;
+        let arr = Array.new(2);
+
+        if (is_hold){
+            let arr[0] = 15;
+            let arr[1] = 0;
+        }
+        else {
+            if (size = 4) {
+                let arr[0] = 3;
+                let arr[1] = -2;
+            }
+            else {
+                if (size = 3) {
+                    let arr[0] = 3;
+                    let arr[1] = -1;
+                }
+                else {
+                    do Sys.halt();
+                }
+            }
+        }
+        
+        return arr;
+    }
+
+    method void new_block_i(boolean is_hold) {
+        var Array bb;
+
+        let block_type = 0;
+
+        let bb = get_bb_coords(4, is_hold);
+        let initial_bb_x = bb[0];
+        let initial_bb_y = bb[1];
+        do Memory.deAlloc(bb);
 
         let rotation_zero_offsets = Utils.create_offsets_array(0, 2, 1, 2, 2, 2, 3, 2);
         let rotation_one_offsets = Utils.create_offsets_array(2, 0, 2, 1, 2, 2, 2, 3);
@@ -86,13 +121,18 @@ class Block {
         do create_squares();
         do show();
 
-        return this;
+        return;
     }
 
-    constructor Block new_block_o() {
+    method void new_block_o(boolean is_hold) {
+        var Array bb;
 
-        let initial_bb_x = 3;
-        let initial_bb_y = -1;
+        let block_type = 1;
+
+        let bb = get_bb_coords(4, is_hold);
+        let initial_bb_x = bb[0];
+        let initial_bb_y = bb[1];
+        do Memory.deAlloc(bb);
 
         let rotation_zero_offsets = Utils.create_offsets_array(1, 1, 1, 2, 2, 1, 2, 2);
         let rotation_one_offsets = Utils.create_offsets_array(1, 1, 1, 2, 2, 1, 2, 2);
@@ -109,14 +149,19 @@ class Block {
         do create_squares();
         do show();
 
-        return this;
+        return;
     }
 
 
-    constructor Block new_block_j() {
+    method void new_block_j(boolean is_hold) {
+        var Array bb;
 
-        let initial_bb_x = 3;
-        let initial_bb_y = -1;
+        let block_type = 2;
+
+        let bb = get_bb_coords(3, is_hold);
+        let initial_bb_x = bb[0];
+        let initial_bb_y = bb[1];
+        do Memory.deAlloc(bb);
 
         let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 2, 1, 2, 2);
         let rotation_one_offsets = Utils.create_offsets_array(1, 0, 1, 1, 0, 2, 1, 2);
@@ -133,14 +178,19 @@ class Block {
         do create_squares();
         do show();
 
-        return this;
+        return;
     }
 
 
-    constructor Block new_block_l() {
+    method void new_block_l(boolean is_hold) {
+        var Array bb;
 
-        let initial_bb_x = 3;
-        let initial_bb_y = -1;
+        let block_type = 3;
+
+        let bb = get_bb_coords(3, is_hold);
+        let initial_bb_x = bb[0];
+        let initial_bb_y = bb[1];
+        do Memory.deAlloc(bb);
 
         let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 1, 2, 0, 2);
         let rotation_one_offsets = Utils.create_offsets_array(0, 0, 1, 0, 1, 1, 1, 2);
@@ -157,13 +207,18 @@ class Block {
         do create_squares();
         do show();
 
-        return this;
+        return;
     }
 
-    constructor Block new_block_s() {
+    method void new_block_s(boolean is_hold) {
+        var Array bb;
 
-        let initial_bb_x = 3;
-        let initial_bb_y = -1;
+        let block_type = 4;
+
+        let bb = get_bb_coords(3, is_hold);
+        let initial_bb_x = bb[0];
+        let initial_bb_y = bb[1];
+        do Memory.deAlloc(bb);
 
         let rotation_zero_offsets = Utils.create_offsets_array(1, 1, 2, 1, 0, 2, 1, 2);
         let rotation_one_offsets = Utils.create_offsets_array(1, 0, 1, 1, 2, 1, 2, 2);
@@ -180,13 +235,18 @@ class Block {
         do create_squares();
         do show();
 
-        return this;
+        return;
     }
 
-    constructor Block new_block_z() {
+    method void new_block_z(boolean is_hold) {
+        var Array bb;
 
-        let initial_bb_x = 3;
-        let initial_bb_y = -1;
+        let block_type = 5;
+
+        let bb = get_bb_coords(3, is_hold);
+        let initial_bb_x = bb[0];
+        let initial_bb_y = bb[1];
+        do Memory.deAlloc(bb);
 
         let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 1, 2, 2, 2);
         let rotation_one_offsets = Utils.create_offsets_array(2, 0, 1, 1, 2, 1, 1, 2);
@@ -203,12 +263,17 @@ class Block {
         do create_squares();
         do show();
 
-        return this;
+        return;
     }
-    constructor Block new_block_t() {
+    method void new_block_t(boolean is_hold) {
+        var Array bb;
 
-        let initial_bb_x = 3;
-        let initial_bb_y = -1;
+        let block_type = 6;
+
+        let bb = get_bb_coords(3, is_hold);
+        let initial_bb_x = bb[0];
+        let initial_bb_y = bb[1];
+        do Memory.deAlloc(bb);
 
         let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 2, 1, 1, 2);
         let rotation_one_offsets = Utils.create_offsets_array(1, 0, 1, 1, 1, 2, 0, 1);
@@ -224,6 +289,50 @@ class Block {
         do initialise();
         do create_squares();
         do show();
+        return;
+    }
+
+    method int get_block_type() {
+        return block_type;
+    }
+
+    constructor Block new_block_from_type(int type, boolean is_hold) {
+        if (type = 0){
+            do new_block_i(is_hold);
+        }
+        else {
+            if (type = 1){
+                do new_block_o(is_hold);
+            }
+            else {
+                if (type = 2){
+                    do new_block_j(is_hold);
+                }
+                else {
+                    if (type = 3){
+                        do new_block_l(is_hold);
+                    }
+                    else {
+                        if (type = 4){
+                            do new_block_s(is_hold);
+                        }
+                        else {
+                            if (type = 5){
+                                do new_block_z(is_hold);
+                            }
+                            else {
+                                if (type = 6){
+                                    do new_block_t(is_hold);
+                                }
+                                else {
+                                    do Sys.halt();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         return this;
     }

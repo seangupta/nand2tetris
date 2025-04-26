@@ -2,13 +2,17 @@
 class Rng {
     field int current, a, c, m;
 
-    constructor Rng new(int random_seed) {
+    constructor Rng new() {
         let a = 219;
         let c = 3;
         let m = 3276;
 
-        let current = random_seed;
         return this;
+    }
+
+    method void set_seed(int random_seed) {
+        let current = random_seed;
+        return;
     }
 
     method int next() {

@@ -9,14 +9,14 @@ class TetrisGame {
     field boolean exit;       // true when the game is over     
     field int total_lines_cleared;
 
-    field boolean move_left, move_right, move_down, rotate, hard_drop;
+    field boolean move_left, move_right, move_down, rotate, hard_drop, swap;
 
     field boolean block_done; // when the handling of the current block is finished
 
     field int key;
     field char direction;
 
-    field Block current_block;
+    field Block current_block, hold_block;
 
     field int line_width; // width of bounding lines
     field int fall_delay_ms; // Delay between falls
@@ -27,7 +27,10 @@ class TetrisGame {
 
     field Array hard_drop_coords_all, current_coords_all;
     field int drop_length;
-    field boolean moved;
+    field boolean first_swap;
+    field boolean swapping_allowed;
+
+    field Rng rng;
 
     /** Constructs a new Tetris game. */
     constructor TetrisGame new() {
@@ -80,6 +83,10 @@ class TetrisGame {
         do Memory.deAlloc(start_game_string);
 
         let exit = false;
+        let first_swap = true;
+        let swapping_allowed = true;
+
+        let rng = Rng.new();
 
         return this;
     }
@@ -195,7 +202,7 @@ class TetrisGame {
     }
 
 
-    method boolean move_if_valid(Block current_block){
+    method boolean move_if_valid(){
         var int i, x_new, y_new;
         var boolean occupied, can_move;
         var Array new_coords_all, new_coords, map_row;
@@ -226,7 +233,6 @@ class TetrisGame {
             do map.update(current_coords_all, false);
             do current_block.apply_move(new_coords_all, direction, 0);
             do map.update(new_coords_all, true);
-            let moved = true;
 
             do Utils.dispose_coords(current_coords_all);
             let current_coords_all = current_block.get_coords();
@@ -236,13 +242,12 @@ class TetrisGame {
         return can_move;
     }
 
-    method void move_if_valid_hard_drop(Block current_block) {
+    method void move_if_valid_hard_drop() {
         if (drop_length > 0){
             do map.update(current_coords_all, false);
             do current_block.apply_move(hard_drop_coords_all, direction, drop_length);
             do map.update(hard_drop_coords_all, true);
 
-            let moved = true;
             do Utils.dispose_coords(current_coords_all);
             let current_coords_all = current_block.get_coords();
         }
@@ -278,6 +283,13 @@ class TetrisGame {
                                 if (key = 32){
                                     let hard_drop = true;
                                 }
+                                else {
+                                    if (key = 67){
+                                        if (swapping_allowed){
+                                            let swap = true;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -292,38 +304,75 @@ class TetrisGame {
         let rotate = false;
         let move_down = false;
         let hard_drop = false;
+        let swap = false;
 
         do key_to_action(key);
 
         if (move_left){
             let direction = direction_left;
-            do move_if_valid(current_block);
+            do move_if_valid();
         }
         else {
             if (move_right){
                 let direction = direction_right;
-                do move_if_valid(current_block);
+                do move_if_valid();
             }
             else {
                 if (rotate){
                     let direction = direction_rotate;
-                    do move_if_valid(current_block);
+                    do move_if_valid();
                 }
                 else {
                     if (move_down){
                         let direction = direction_down;
-                        do move_if_valid(current_block);
+                        do move_if_valid();
                     }
                     else {
                         if (hard_drop){
                             let direction = direction_hard_drop;
-                            do move_if_valid_hard_drop(current_block);
+                            do move_if_valid_hard_drop();
+                        }
+                        else {
+                            if (swap){
+                                do swap_current_with_hold_block();
+                            }
                         }
                     }
                 }
             }
         }
 
+        return;
+    }
+
+    method void swap_current_with_hold_block() {
+        var int current_type, new_type, random_number;
+
+        let current_type = current_block.get_block_type();
+        do map.update(current_coords_all, false);
+        do hide_hard_drop_preview();
+        do current_block.hide();
+        do current_block.dispose();
+
+        if (first_swap) {
+            let random_number = rng.next();
+            let new_type = rng.random_to_one_to_n(random_number, 7);
+        }
+        else {
+            let new_type = hold_block.get_block_type();
+            do hold_block.hide();
+            do hold_block.dispose();
+        }
+
+        let hold_block = Block.new_block_from_type(current_type, true);
+        let current_block = Block.new_block_from_type(new_type, false);
+
+        do Utils.dispose_coords(current_coords_all);
+        let current_coords_all = current_block.get_coords();
+        do map.update(current_coords_all, true);
+
+        let first_swap = false;
+        let swapping_allowed = false;
         return;
     }
 
@@ -343,6 +392,7 @@ class TetrisGame {
         let rotate = false;
         let move_down = false;
         let hard_drop = false;
+        let swap = false;
 
         let key_was_released = false;
         let first_cycle = true;
@@ -353,8 +403,6 @@ class TetrisGame {
         do update_hard_drop_coordinates(first_cycle);
 
         while ((~exit) & (~block_done)){
-            let moved = false;
-
             let key = Keyboard.keyPressed();
             if (key = 0){
                 let key_was_released = true;
@@ -364,6 +412,10 @@ class TetrisGame {
                 if (key_was_released){
                     do act_on_key();
                     do update_hard_drop_coordinates(first_cycle);
+                    if (swap) {
+                        let num_falls = 0;
+                        let num_waits = 0;
+                    }
                 }
                 let key_was_released = false;
             }
@@ -371,7 +423,7 @@ class TetrisGame {
             if (~hard_drop){
                 if ((num_waits > 0) & (Utils.mod(num_waits, fall_delay_ms) = 0)) {
                     let direction = direction_fall;
-                    let block_done = ~move_if_valid(current_block);
+                    let block_done = ~move_if_valid();
                     if ((num_falls = 0) & (block_done)){
                         let exit = true;
                     }
@@ -383,6 +435,7 @@ class TetrisGame {
             let num_waits = num_waits + 1;
             let first_cycle = false;
         }
+        let swapping_allowed = true;
 
         do hide_hard_drop_preview();
 
@@ -403,7 +456,6 @@ class TetrisGame {
         var String erase_string, game_over_string;
         var boolean start_game;
         var int key, random_number, random_number_bucketed, random_seed;
-        var Rng rng;
 
         let start_game = false;
         let random_seed = 0;
@@ -416,58 +468,18 @@ class TetrisGame {
             let random_seed = random_seed + 1;
             do Sys.wait(1);
         }
+        do rng.set_seed(random_seed);
         
         do Output.moveCursor(10, 26);
         let erase_string = "            ";
         do Output.printString(erase_string);
         do Memory.deAlloc(erase_string);
 
-        let rng = Rng.new(random_seed);
-
         while (~exit) {
             let random_number = rng.next();
             let random_number_bucketed = rng.random_to_one_to_n(random_number, 7);
-            if (random_number_bucketed = 0){
-                let current_block = Block.new_block_i();
-            }
-            else {
-                if (random_number_bucketed = 1){
-                    let current_block = Block.new_block_o();
-                }
-                else {
-                    if (random_number_bucketed = 2){
-                        let current_block = Block.new_block_j();
-                    }
-                    else {
-                        if (random_number_bucketed = 3){
-                            let current_block = Block.new_block_l();
-                        }
-                        else {
-                            if (random_number_bucketed = 4){
-                                let current_block = Block.new_block_s();
-                            }
-                            else {
-                                if (random_number_bucketed = 5){
-                                    let current_block = Block.new_block_z();
-                                }
-                                else {
-                                    if (random_number_bucketed = 6){
-                                        let current_block = Block.new_block_t();
-                                    }
-                                    else {
-                                        do Sys.halt();
-                                    }
-                                }
-                                
-                            }
-                            
-                        }
-                        
-                    }
-                    
-                }
-            }
-            
+            let current_block = Block.new_block_from_type(random_number_bucketed, false);
+
             do current_block.show();
             do handle_current_block();
             do current_block.dispose();

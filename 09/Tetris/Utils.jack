@@ -95,20 +95,29 @@ class Utils {
     }
 
 
-    function void debug_coords(Array coords_array){
+    function void print_debug_coords(Array coords_array){
         var Array c;
         var int i;
+        var String space, comma;
 
-        do Output.moveCursor(3,50);
+        let space = " ";
+        let comma = ",";
+
+        do Output.moveCursor(10,50);
 
         let i = 0;
         while (i < 4){
             let c = coords_array[i];
             do Output.printInt(c[0]);
+            do Output.printString(comma);
             do Output.printInt(c[1]);
+            do Output.printString(space);
             let i = i + 1;
         }
         do Sys.wait(5000);
+
+        do Memory.deAlloc(space);
+        do Memory.deAlloc(comma);
 
         return;
     }
@@ -123,6 +132,22 @@ class Utils {
             let i = i + 1;
         }
         do Memory.deAlloc(coords_all);
+
+        return;
+    }
+
+    function void print_debug_msg(String msg) {
+        var String empty_str;
+
+        do Output.moveCursor(10,50);
+        do Output.printString(msg);
+        do Memory.deAlloc(msg);
+        do Sys.wait(5000);
+
+        let empty_str = "                ";
+        do Output.moveCursor(3,50);
+        do Output.printString(empty_str);
+        do Memory.deAlloc(empty_str);
 
         return;
     }
