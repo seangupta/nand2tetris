@@ -2,12 +2,12 @@
 class Rng {
     field int current, a, c, m;
 
-    constructor Rng new() {
+    constructor Rng new(int random_seed) {
         let a = 219;
         let c = 3;
         let m = 3276;
 
-        let current = 1;
+        let current = random_seed;
         return this;
     }
 

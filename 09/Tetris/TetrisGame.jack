@@ -403,15 +403,19 @@ class TetrisGame {
     method void run() {
         var String erase_string, game_over_string;
         var boolean start_game;
-        var int key, random_number, random_number_bucketed;
+        var int key, random_number, random_number_bucketed, random_seed;
         var Rng rng;
 
         let start_game = false;
+        let random_seed = 0;
+
         while (~start_game) {
             let key = Keyboard.keyPressed();
             if (key = 128){
                 let start_game = true;
             }
+            let random_seed = random_seed + 1;
+            do Sys.wait(1);
         }
         
         do Output.moveCursor(10, 26);
@@ -419,7 +423,7 @@ class TetrisGame {
         do Output.printString(erase_string);
         do Memory.deAlloc(erase_string);
 
-        let rng = Rng.new();
+        let rng = Rng.new(random_seed);
 
         while (~exit) {
             let random_number = rng.next();
