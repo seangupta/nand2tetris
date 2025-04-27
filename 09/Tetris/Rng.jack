@@ -21,7 +21,7 @@ class Rng {
     }
 
     /* Buckets a random number into a number from 0 to n - 1 */
-    method int random_to_one_to_n(int random_num, int n){
+    method int bucket_random_number(int random_num, int n){
         var int res;
         let res = (n * random_num) / m;
         if ((res < 0) | (res > (n - 1))){

@@ -103,7 +103,7 @@ class Utils {
         let space = " ";
         let comma = ",";
 
-        do Output.moveCursor(10,50);
+        do Output.moveCursor(20,50);
 
         let i = 0;
         while (i < 4){
@@ -139,13 +139,28 @@ class Utils {
     function void print_debug_msg(String msg) {
         var String empty_str;
 
-        do Output.moveCursor(10,50);
+        do Output.moveCursor(20,50);
         do Output.printString(msg);
         do Memory.deAlloc(msg);
         do Sys.wait(5000);
 
         let empty_str = "                ";
-        do Output.moveCursor(3,50);
+        do Output.moveCursor(20,50);
+        do Output.printString(empty_str);
+        do Memory.deAlloc(empty_str);
+
+        return;
+    }
+
+    function void print_debug_int(int x) {
+        var String empty_str;
+
+        do Output.moveCursor(20,50);
+        do Output.printInt(x);
+        do Sys.wait(2000);
+
+        let empty_str = "                ";
+        do Output.moveCursor(20,50);
         do Output.printString(empty_str);
         do Memory.deAlloc(empty_str);
 

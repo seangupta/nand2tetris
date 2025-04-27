@@ -16,7 +16,7 @@ class TetrisGame {
     field int key;
     field char direction;
 
-    field Block current_block, hold_block;
+    field Block current_block, hold_block, next_block;
 
     field int line_width; // width of bounding lines
     field int fall_delay_ms; // Delay between falls
@@ -34,7 +34,8 @@ class TetrisGame {
 
     /** Constructs a new Tetris game. */
     constructor TetrisGame new() {
-        var String initial_lines_string, start_game_string, s, t, u, v, w, x;
+        var String initial_lines_string, start_game_string, hold_string, next_string;
+        var String s, t, u, v, w, x;
 
         let s = "l";
         let direction_left = s.charAt(0);
@@ -72,10 +73,20 @@ class TetrisGame {
         do Screen.drawRectangle(196 - line_width, 16, 195, 255);
         do Screen.drawRectangle(316, 16, 315 + line_width, 255);
 
-	    do Output.moveCursor(22,0);
+	    do Output.moveCursor(21, 2);
         let initial_lines_string = "Lines cleared: 0";
 	    do Output.printString(initial_lines_string);
         do Memory.deAlloc(initial_lines_string);
+
+        do Output.moveCursor(3, 8);
+        let hold_string = "Hold";
+	    do Output.printString(hold_string);
+        do Memory.deAlloc(hold_string);
+
+        do Output.moveCursor(8, 50 );
+        let next_string = "Next";
+	    do Output.printString(next_string);
+        do Memory.deAlloc(next_string);
 
         let start_game_string = "Press Enter!";
         do Output.moveCursor(10, 26);
@@ -356,7 +367,7 @@ class TetrisGame {
 
         if (first_swap) {
             let random_number = rng.next();
-            let new_type = rng.random_to_one_to_n(random_number, 7);
+            let new_type = rng.bucket_random_number(random_number, 7);
         }
         else {
             let new_type = hold_block.get_block_type();
@@ -364,8 +375,8 @@ class TetrisGame {
             do hold_block.dispose();
         }
 
-        let hold_block = Block.new_block_from_type(current_type, true);
-        let current_block = Block.new_block_from_type(new_type, false);
+        let hold_block = Block.new_block_from_type(current_type, true, false);
+        let current_block = Block.new_block_from_type(new_type, false, false);
 
         do Utils.dispose_coords(current_coords_all);
         let current_coords_all = current_block.get_coords();
@@ -454,8 +465,8 @@ class TetrisGame {
     */
     method void run() {
         var String erase_string, game_over_string;
-        var boolean start_game;
-        var int key, random_number, random_number_bucketed, random_seed;
+        var boolean start_game, is_first_block;
+        var int key, random_number, random_type, random_seed, next_type;
 
         let start_game = false;
         let random_seed = 0;
@@ -475,14 +486,33 @@ class TetrisGame {
         do Output.printString(erase_string);
         do Memory.deAlloc(erase_string);
 
+        let is_first_block = true;
+
         while (~exit) {
+            if (is_first_block) {
+                let random_number = rng.next();
+                let random_type = rng.bucket_random_number(random_number, 7);
+                let current_block = Block.new_block_from_type(random_type, false, false);
+            }
+            else {
+                let next_type = next_block.get_block_type();
+                do next_block.hide();
+                do next_block.dispose();
+
+                let current_block = Block.new_block_from_type(next_type, false, false);
+            }
+
             let random_number = rng.next();
-            let random_number_bucketed = rng.random_to_one_to_n(random_number, 7);
-            let current_block = Block.new_block_from_type(random_number_bucketed, false);
+            let random_type = rng.bucket_random_number(random_number, 7);
+
+            let next_block = Block.new_block_from_type(random_type, false, true);
+            do next_block.show();
 
             do current_block.show();
             do handle_current_block();
             do current_block.dispose();
+
+            let is_first_block = false;
         }
 
         if (exit) {
