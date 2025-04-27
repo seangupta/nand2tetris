@@ -527,7 +527,7 @@ class TetrisGame {
 
 
     method void output_lines_cleared() {
-        do Output.moveCursor(22,15);
+        do Output.moveCursor(21, 17);
         do Output.printInt(total_lines_cleared);
         return;
     }

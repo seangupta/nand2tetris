@@ -150,25 +150,6 @@ class Map {
             let i = i - 1;
         }
 
-        /*
-        do Output.moveCursor(3,40);
-        let i = 0;
-        while (i < field_height){
-            do Output.printInt(line_cleared_indicators[i]);
-            let i = i + 1;
-        }
-        do Sys.wait(5000);
-
-        do Output.moveCursor(4,40);
-        let i = 0;
-        while (i < field_height){
-            do Output.printInt(num_cleared_lines_below[i]);
-            let i = i + 1;
-        }
-        do Sys.wait(5000);
-        */
-
-
         // Need to start from the bottom
         let y = field_height - 1;
         while (y > -1){
