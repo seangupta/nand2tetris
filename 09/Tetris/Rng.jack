@@ -23,13 +23,24 @@ class Rng {
         return current;
     }
 
-    /* Buckets a random number into a number from 0 to n - 1 */
-    method int bucket_random_number(int random_num, int n){
-        var int res;
-        let res = random_num / (32767 / n);
-        if ((res < 0) | (res > (n - 1))){
+    /* Returns a random number from 0 to n - 1 */
+    method int random_number(int n){
+        var int res, mask;
+
+        let mask = 1;
+        while (mask < (n - 1)) {
+            let mask = mask * 2 + 1;
+        }
+
+        let res = next() & mask;
+        while (res > (n - 1)) {
+            let res = next() & mask;
+        }
+    
+        if (res < 0){
             do Sys.halt();
         }
+
         return res;
     }
 }

@@ -365,7 +365,7 @@ class TetrisGame {
     }
 
     method void swap_current_with_hold_block() {
-        var int current_type, new_type, random_number;
+        var int current_type, new_type;
 
         let current_type = current_block.get_block_type();
         do map.update(current_coords_all, false);
@@ -374,8 +374,7 @@ class TetrisGame {
         do current_block.dispose();
 
         if (first_swap) {
-            let random_number = rng.next();
-            let new_type = rng.bucket_random_number(random_number, 7);
+            let new_type = rng.random_number(7);
         }
         else {
             let new_type = hold_block.get_block_type();
@@ -475,7 +474,7 @@ class TetrisGame {
     method void run() {
         var String erase_string, game_over_string;
         var boolean start_game, is_first_block;
-        var int key, random_number, random_type, random_seed, next_type;
+        var int key, random_type, random_seed, next_type;
 
         let start_game = false;
         let random_seed = 0;
@@ -499,8 +498,7 @@ class TetrisGame {
 
         while (~exit) {
             if (is_first_block) {
-                let random_number = rng.next();
-                let random_type = rng.bucket_random_number(random_number, 7);
+                let random_type = rng.random_number(7);
                 let current_block = Block.new_block_from_type(random_type, false, false);
             }
             else {
@@ -511,8 +509,7 @@ class TetrisGame {
                 let current_block = Block.new_block_from_type(next_type, false, false);
             }
 
-            let random_number = rng.next();
-            let random_type = rng.bucket_random_number(random_number, 7);
+            let random_type = rng.random_number(7);
 
             let next_block = Block.new_block_from_type(random_type, false, true);
             do next_block.show();
