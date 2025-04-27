@@ -1,0 +1,32 @@
+/** Random number generator */
+class Rng {
+    field int current, a, c, m;
+
+    constructor Rng new() {
+        let a = 219;
+        let c = 3;
+        let m = 3276;
+
+        return this;
+    }
+
+    method void set_seed(int random_seed) {
+        let current = random_seed;
+        return;
+    }
+
+    method int next() {
+        let current = Utils.mod(((a * current) + c), m);
+        return current;
+    }
+
+    /* Buckets a random number into a number from 0 to n - 1 */
+    method int bucket_random_number(int random_num, int n){
+        var int res;
+        let res = (n * random_num) / m;
+        if ((res < 0) | (res > (n - 1))){
+            do Sys.halt();
+        }
+        return res;
+    }
+}

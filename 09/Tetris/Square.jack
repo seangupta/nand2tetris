@@ -1,0 +1,100 @@
+/** Represents a single square. A block is made up of four squares. */
+class Square {
+    field int x, y; // Location within the 10 x 20 Tetris field
+
+    constructor Square new(int Ax, int Ay){
+        let x = Ax;
+        let y = Ay;
+        return this;
+    }
+
+    method int get_x(){
+        return x;
+    }
+
+    method void set_x(int Ax){
+        let x = Ax;
+        return;
+    }
+
+    method int get_y(){
+        return y;
+    }
+
+    method void set_y(int Ay){
+        let y = Ay;
+        return;
+    }
+
+    /** Deallocates the object's memory. */
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+
+    /** Shows the square. */
+    method void show() {
+        do Screen.setColor(true);
+        do draw();
+        return;
+    }
+
+    /** Hides the square. */
+    method void hide() {
+        do Screen.setColor(false);
+        do draw();
+        return;
+    }
+
+    /** Draws the square, excluding the border */
+    method void draw() {
+        do Screen.drawRectangle(
+            197 + (12 * x),
+            17 + (12 * y), 
+            194 + (12 * (x + 1)), 
+            14 + (12 * (y + 1))
+        );
+        return;
+    }
+
+    method void show_preview() {
+        do Screen.setColor(true);
+        do draw_preview();
+        return;
+    }
+
+    method void hide_preview() {
+        do Screen.setColor(false);
+        do draw_preview();
+        return;
+    }
+
+    method void draw_preview() {
+        do Screen.drawLine(
+            196 + (12 * x),
+            16 + (12 * y),
+            195 + (12 * (x + 1)),
+            16 + (12 * y)
+        );
+        do Screen.drawRectangle(
+            196 + (12 * x),
+            15 + (12 * (y + 1)),
+            195 + (12 * (x + 1)), 
+            15 + (12 * (y + 1))
+        );
+        do Screen.drawRectangle(
+            196 + (12 * x),
+            16 + (12 * y), 
+            196 + (12 * x),
+            15 + (12 * (y + 1))
+        );
+        do Screen.drawRectangle(
+            195 + (12 * (x + 1)),
+            16 + (12 * y), 
+            195 + (12 * (x + 1)), 
+            15 + (12 * (y + 1))
+        );
+        return;
+    }
+
+}

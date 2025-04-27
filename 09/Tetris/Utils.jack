@@ -1,0 +1,170 @@
+/** Utility functions */
+class Utils {
+
+    // Need at least one field for malloc not to allocate size 0
+    field int unused;
+
+    constructor Utils new(){
+        return this;
+    }
+
+    function Array create_zero_array(int size){
+        var Array arr;
+        var int i;
+
+        let arr = Array.new(size);
+        let i = 0;
+        while (i < size){
+            let arr[i] = 0;
+            let i = i + 1;
+        }
+        return arr;
+    }
+
+    function boolean isin_int_array(int x, size n, Array arr){
+        var int i;
+        var boolean found;
+
+        let found = false;
+        let i = 0;
+
+        while ((i < n) & (~found)){
+            if (arr[i] = x){
+                let found = true;
+            }
+            let i = i + 1;
+        }
+        return found;
+    }
+
+    function boolean is_coord_in_coords(Array coord, Array coords){
+        var Arr cand;
+        var boolean coord_found;
+        var int i;
+
+        let coord_found = false;
+        while (i < 4){
+            let cand = coords[i];
+            if ((coord[0] = cand[0]) & (coord[1] = cand[1])){
+                let coord_found = true;
+            }
+            let i = i + 1;
+        }
+        return coord_found;
+    }
+
+    function Array create_offsets_array(int a, int b, int c, int d, int e, int f, int g, int h){
+        var Array offsets, arr;
+
+        let offsets = Array.new(4);
+        let arr = Array.new(2);
+        let arr[0] = a;
+        let arr[1] = b;
+        let offsets[0] = arr;
+        let arr = Array.new(2);
+        let arr[0] = c;
+        let arr[1] = d;
+        let offsets[1] = arr;
+        let arr = Array.new(2);
+        let arr[0] = e;
+        let arr[1] = f;
+        let offsets[2] = arr;
+        let arr = Array.new(2);
+        let arr[0] = g;
+        let arr[1] = h;
+        let offsets[3] = arr;
+        
+        return offsets;
+    }
+
+    function int mod(int a, int b){
+        var int div, res;
+
+        if (b > 0){
+            let div = a / b;
+            let res = a - (div * b);
+            if (res < 0){
+                let res = res + b;
+            }
+        }
+        else {
+            // Not implemented for negative numbers
+            do Sys.halt();
+        }
+        return res;
+    }
+
+
+    function void print_debug_coords(Array coords_array){
+        var Array c;
+        var int i;
+        var String space, comma;
+
+        let space = " ";
+        let comma = ",";
+
+        do Output.moveCursor(20,50);
+
+        let i = 0;
+        while (i < 4){
+            let c = coords_array[i];
+            do Output.printInt(c[0]);
+            do Output.printString(comma);
+            do Output.printInt(c[1]);
+            do Output.printString(space);
+            let i = i + 1;
+        }
+        do Sys.wait(5000);
+
+        do Memory.deAlloc(space);
+        do Memory.deAlloc(comma);
+
+        return;
+    }
+
+    /* Disposes of a 4 x 2 array */
+    function void dispose_coords(Array coords_all) {
+        var int i;
+
+        let i = 0;
+        while (i < 4){
+            do Memory.deAlloc(coords_all[i]);
+            let i = i + 1;
+        }
+        do Memory.deAlloc(coords_all);
+
+        return;
+    }
+
+    function void print_debug_msg(String msg) {
+        var String empty_str;
+
+        do Output.moveCursor(20,50);
+        do Output.printString(msg);
+        do Memory.deAlloc(msg);
+        do Sys.wait(5000);
+
+        let empty_str = "                ";
+        do Output.moveCursor(20,50);
+        do Output.printString(empty_str);
+        do Memory.deAlloc(empty_str);
+
+        return;
+    }
+
+    function void print_debug_int(int x) {
+        var String empty_str;
+
+        do Output.moveCursor(20,50);
+        do Output.printInt(x);
+        do Sys.wait(2000);
+
+        let empty_str = "                ";
+        do Output.moveCursor(20,50);
+        do Output.printString(empty_str);
+        do Memory.deAlloc(empty_str);
+
+        return;
+    }
+
+}
