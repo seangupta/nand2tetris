@@ -192,7 +192,7 @@ class Block {
         let initial_bb_y = bb[1];
         do Memory.deAlloc(bb);
 
-        let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 1, 2, 0, 2);
+        let rotation_zero_offsets = Utils.create_offsets_array(0, 1, 1, 1, 2, 1, 0, 2);
         let rotation_one_offsets = Utils.create_offsets_array(0, 0, 1, 0, 1, 1, 1, 2);
         let rotation_two_offsets = Utils.create_offsets_array(2, 0, 0, 1, 1, 1, 2, 1);
         let rotation_three_offsets = Utils.create_offsets_array(1, 0, 1, 1, 1, 2, 2, 2);
