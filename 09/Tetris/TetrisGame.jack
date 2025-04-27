@@ -20,6 +20,7 @@ class TetrisGame {
 
     field int line_width; // width of bounding lines
     field int fall_delay_ms; // Delay between falls
+    field int level;
     
     // 20 x 10 array showing whether field is empty (= 0) or occupied(= 1)
     // Y x X as we want to iterate through rows to identify cleared lines
@@ -34,7 +35,7 @@ class TetrisGame {
 
     /** Constructs a new Tetris game. */
     constructor TetrisGame new() {
-        var String initial_lines_string, start_game_string, hold_string, next_string;
+        var String initial_lines_string, initial_level_string, start_game_string, hold_string, next_string;
         var String s, t, u, v, w, x;
 
         let s = "l";
@@ -66,12 +67,19 @@ class TetrisGame {
         let total_lines_cleared = 0;
 
         let line_width = 2;
-        let fall_delay_ms = 300;
+
+        let level = 1;
+        let fall_delay_ms = 1000;
 
         let map = Map.initialise_map();
 
         do Screen.drawRectangle(196 - line_width, 16, 195, 255);
         do Screen.drawRectangle(316, 16, 315 + line_width, 255);
+
+        do Output.moveCursor(19, 2);
+        let initial_level_string = "Level: 1";
+	    do Output.printString(initial_level_string);
+        do Memory.deAlloc(initial_level_string);
 
 	    do Output.moveCursor(21, 2);
         let initial_lines_string = "Lines cleared: 0";
@@ -455,6 +463,7 @@ class TetrisGame {
 
         if (num_lines_cleared > 0){
             do output_lines_cleared();
+            do update_level();
         }
         return;
     }
@@ -529,6 +538,30 @@ class TetrisGame {
     method void output_lines_cleared() {
         do Output.moveCursor(21, 17);
         do Output.printInt(total_lines_cleared);
+        return;
+    }
+
+    method void update_level() {
+        let level = 1 + (total_lines_cleared / 5);
+        do Output.moveCursor(19, 9);
+        do Output.printInt(level);
+
+        do update_fall_delay();
+        return;
+    }
+
+    method void update_fall_delay() {
+        var int i, new_fall_delay_ms;
+
+        let new_fall_delay_ms = 1000;
+
+        let i = level - 1;
+        while (i > 0) {
+            let new_fall_delay_ms = (new_fall_delay_ms * 2) / 3;
+            let i = i - 1;
+        }
+
+        let fall_delay_ms = new_fall_delay_ms;
         return;
     }
 
