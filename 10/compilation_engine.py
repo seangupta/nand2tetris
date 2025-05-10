@@ -6,6 +6,7 @@ class CompilationEngine:
         self.tokens = tokens
         self.current_position = 0
         self.output_lines = []
+        self.indentation_level = 0
 
     @property
     def current_token(self):
@@ -19,24 +20,35 @@ class CompilationEngine:
     def next_next_token(self):
         return self.tokens[self.current_position + 2]
     
+    def add_indentation(self, line):
+        return "  " * self.indentation_level + line
+    
     def add_opening_tag(self, tag):
-        self.output_lines.append(f"<{tag}>")
+        line = f"<{tag}>"
+        line = self.add_indentation(line)
+        self.output_lines.append(line)
 
     def add_closing_tag(self, tag):
-        self.output_lines.append(f"</{tag}>")
+        line = f"</{tag}>"
+        line = self.add_indentation(line)
+        self.output_lines.append(line)
 
     def add_tags(tag):
         def decorator(func):
             def wrapper(self):
                 self.add_opening_tag(tag)
+                self.indentation_level += 1
                 func(self)
+                self.indentation_level -= 1
                 self.add_closing_tag(tag)
             return wrapper
         return decorator
 
     def process_current_token(self):
         assert isinstance(self.current_token, Token)
-        self.output_lines.append(self.current_token.get_line())
+        line = self.current_token.get_line()
+        line = self.add_indentation(line)
+        self.output_lines.append(line)
         self.current_position += 1
 
     def process_symbol(self, name):

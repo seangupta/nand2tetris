@@ -41,7 +41,7 @@ class JackAnalyzer:
             print("Starting compilation")
             engine = CompilationEngine(output_tokens)
             engine.compile_class()
-            output_lines = engine.output_lines
+            output_lines = engine.output_lines + [""]
             print("Finished compilation")
         else:
             print("Creating token output lines")
