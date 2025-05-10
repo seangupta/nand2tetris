@@ -1,6 +1,7 @@
 from definitions import (
     KEYWORD, SYMBOL, STRING_CONSTANT, INTEGER_CONSTANT, 
-    IDENTIFIER, KEYWORDS, SYMBOLS, TOKEN_TYPES, ESCAPED_SYMBOLS, KEYWORD_CONSTANTS
+    IDENTIFIER, KEYWORDS, SYMBOLS, TOKEN_TYPES, ESCAPED_SYMBOLS, KEYWORD_CONSTANTS,
+    UNARY_OPS, BINARY_OPS
 )
 
 
@@ -27,6 +28,22 @@ class Token:
     @property
     def is_keyword_constant(self):
         return self.token_name in KEYWORD_CONSTANTS
+    
+    @property
+    def is_string_constant(self):
+        return self.token_type == STRING_CONSTANT
+    
+    @property
+    def is_integer_constant(self):
+        return self.token_type == INTEGER_CONSTANT
+    
+    @property
+    def is_unary_op(self):
+        return self.token_name in UNARY_OPS
+
+    @property
+    def is_binary_op(self):
+        return self.token_name in BINARY_OPS
     
     @property
     def is_type(self):

@@ -83,17 +83,11 @@ class CompilationEngine:
 
         self.process_symbol("{")
 
-        while True:
-            if self.current_token.is_keyword("static") or self.current_token.is_keyword("field"):
-                self.compile_class_var_dec()
-            else:
-                break
+        while self.current_token.is_keyword("static") or self.current_token.is_keyword("field"):
+            self.compile_class_var_dec()
         
-        while True:
-            if self.starting_subroutine_dec():
-                self.compile_subroutine_dec()
-            else:
-                break
+        while self.starting_subroutine_dec():
+            self.compile_subroutine_dec()
 
         self.process_symbol("}")
 
@@ -105,12 +99,9 @@ class CompilationEngine:
         self.process_type()
         self.process_varname()
 
-        while True:
-            if self.current_token.is_symbol(",") and self.next_token.is_identifier:
-                self.process_current_token()
-                self.process_current_token()
-            else:
-                break
+        while self.current_token.is_symbol(",") and self.next_token.is_identifier:
+            self.process_current_token()
+            self.process_current_token()
 
         self.process_symbol(";")
     
@@ -134,27 +125,21 @@ class CompilationEngine:
             self.process_current_token()
             self.process_current_token()
 
-            while True:
-                if (
-                    self.current_token.is_symbol(",") 
-                    and self.next_token.is_type 
-                    and self.next_next_token.is_identifier
-                    ):
-                    self.process_current_token()
-                    self.process_current_token()
-                    self.process_current_token()
-                else:
-                    break
+            while (
+                self.current_token.is_symbol(",") 
+                and self.next_token.is_type 
+                and self.next_next_token.is_identifier
+                ):
+                self.process_current_token()
+                self.process_current_token()
+                self.process_current_token()
 
     @add_tags("subroutineBody")
     def compile_subroutine_body(self):
         self.process_symbol("{")
 
-        while True:
-            if self.current_token.is_keyword("var"):
-                self.compile_var_dec()
-            else:
-                break
+        while self.current_token.is_keyword("var"):
+            self.compile_var_dec()
 
         self.compile_statements()
         self.process_symbol("}")
@@ -165,31 +150,49 @@ class CompilationEngine:
         self.process_type()
         self.process_varname()
 
-        while True:
-            if self.current_token.is_symbol(",") and self.next_token.is_identifier:
-                self.process_current_token()
-                self.process_current_token()
-            else:
-                break
+        while self.current_token.is_symbol(",") and self.next_token.is_identifier:
+            self.process_current_token()
+            self.process_current_token()
 
         self.process_symbol(";")
         
     @add_tags("expression")
     def compile_expression(self):
-        # TODO: Complete
         self.compile_term()
+        while self.current_token.is_binary_op:
+            self.process_current_token()
+            self.compile_term()
 
     @add_tags("term")
     def compile_term(self):
-        # TODO: Complete
-
-        if self.current_token.is_identifier:
+        if self.current_token.is_keyword_constant:
+            self.process_current_token()
+        elif self.current_token.is_string_constant:
+            self.process_current_token()
+        elif self.current_token.is_integer_constant:
+            self.process_current_token()
+        elif self.current_token.is_symbol("("):
+            self.process_current_token()
+            self.compile_expression()
+            assert self.current_token.is_symbol(")")
+            self.process_current_token()
+        elif self.current_token.is_unary_op:
+            self.process_current_token()
+            self.compile_term()
+        elif self.next_token.is_symbol('['):
             self.process_varname()
-        elif self.current_token.is_keyword_constant:
-            self.process_keyword(self.current_token.token_name)
+            self.process_symbol("[")
+            self.compile_expression()
+            self.process_symbol("]")
+        elif self.next_token.is_symbol("("):
+            self.process_subroutine_no_attr()
+        elif self.next_token.is_symbol("."):
+            self.process_subroutine_attr()
+        elif self.current_token.is_identifier:
+            self.process_varname()
         else:
-            raise NotImplementedError
-
+            raise ValueError(f"Couldn't compile term: {self.current_token.token_name}")
+    
     @add_tags("expressionList")
     def compile_expression_list(self):        
         if self.current_token.is_symbol(")"):
@@ -221,7 +224,10 @@ class CompilationEngine:
         self.process_keyword("let")
         self.process_varname()
 
-        # TODO: Handle array indexing
+        if self.current_token.is_symbol("["):
+            self.process_symbol("[")
+            self.compile_expression()
+            self.process_symbol("]")
 
         self.process_symbol("=")
         self.compile_expression()
@@ -257,28 +263,29 @@ class CompilationEngine:
     def compile_do_statement(self):
         self.process_keyword("do")
 
-        # subroutine call
-        # self.compile_expression()
-
         if self.next_token.is_symbol("."):
-            assert self.current_token.is_identifier
-            self.process_current_token()
-
-            self.process_symbol(".")
-            self.process_subroutine_name()
-            self.process_symbol("(")
-            self.compile_expression_list()
-            self.process_symbol(")")
+            self.process_subroutine_attr()
         else:
-            assert self.current_token.is_identifier
-            self.process_current_token()
-
-            self.process_symbol("(")
-            self.compile_expression_list()
-            self.process_symbol(")")
+            self.process_subroutine_no_attr()
 
         self.process_symbol(";")
-    
+
+    def process_subroutine_no_attr(self):
+        self.process_subroutine_name()
+        self.process_symbol("(")
+        self.compile_expression_list()
+        self.process_symbol(")")
+
+    def process_subroutine_attr(self):
+        assert self.current_token.is_identifier
+        self.process_current_token()
+
+        self.process_symbol(".")
+        self.process_subroutine_name()
+        self.process_symbol("(")
+        self.compile_expression_list()
+        self.process_symbol(")")
+
     @add_tags("returnStatement")
     def compile_return_statement(self):
         self.process_keyword("return")
@@ -290,11 +297,8 @@ class CompilationEngine:
 
     @add_tags("statements")
     def compile_statements(self):
-        while True:
-            if self.starting_statement():
-                self.compile_statement()
-            else:
-                break
+        while self.starting_statement():
+            self.compile_statement()
     
     def starting_statement(self):
         return (
