@@ -1,65 +1,14 @@
-import argparse
-import os
+from definitions import KEYWORD, SYMBOL, STRING_CONSTANT, INTEGER_CONSTANT, IDENTIFIER, KEYWORDS, SYMBOLS, TOKEN_TYPES
 
-KEYWORD = "keyword"
-SYMBOL = "symbol"
-STRING_CONSTANT = "stringConstant"
-INTEGER_CONSTANT = "integerConstant"
-IDENTIFIER = "identifier"
 
-KEYWORDS = [
-    'class',
-    'constructor', 
-    'function',
-    'method', 
-    'field', 
-    'static', 
-    'var', 
-    'int',
-    'char',
-    'boolean',
-    'void',
-    'true', 
-    'false',
-    'null', 
-    'this', 
-    'let', 
-    'do', 
-    'if', 
-    'else',
-    'while', 
-    'return',
-]
+class Token:
+    def __init__(self, token_name, token_type):
+        assert token_type in TOKEN_TYPES
+        assert isinstance(token_name, str)
 
-SYMBOLS = [
-    '{', 
-    '}', 
-    '(', 
-    ')', 
-    '[', 
-    ']', 
-    '.', 
-    ',', 
-    ';', 
-    '+', 
-    '-', 
-    '*',
-    '/', 
-    '&',
-    '|', 
-    ',', 
-    '<', 
-    '>', 
-    '=', 
-    '~',
-]
+        self.token_name = token_name
+        self.token_type = token_type
 
-ESCAPED_SYMBOLS = {
-    '<': "&lt;",
-    '>': "&gt;",
-    '"': "&quot;",
-    '&': "&amp;",
-}
 
 class Tokenizer():
     def __init__(self):
@@ -82,19 +31,8 @@ class Tokenizer():
         else:
             raise ValueError("Unknown token type")
     
-    @staticmethod
-    def get_line(token, token_type):
-        if token_type == STRING_CONSTANT:
-            line =  f"<{token_type}> {token[1:-1]} </{token_type}>"
-        elif token in ESCAPED_SYMBOLS:
-            line =  f"<{token_type}> {ESCAPED_SYMBOLS[token]} </{token_type}>"
-        else:
-            line =  f"<{token_type}> {token} </{token_type}>"
-        print(line)
-        return line
-
     def tokenize(self, lines):
-        otuput_lines = ["<tokens>"]
+        output_tokens = []
         in_comment = False
 
         for line in lines:
@@ -120,58 +58,20 @@ class Tokenizer():
                     current_token += char
                     if char == '"':
                         # End of string constant
-                        otuput_lines.append(self.get_line(current_token, STRING_CONSTANT))
+                        output_tokens.append(Token(current_token, STRING_CONSTANT))
                         current_token = ""
                 elif char in SYMBOLS:
                     if current_token:
                         token_type = self.get_token_type(current_token)
-                        otuput_lines.append(self.get_line(current_token, token_type))
-                    otuput_lines.append(self.get_line(char, SYMBOL))
+                        output_tokens.append(Token(current_token, token_type))
+                    output_tokens.append(Token(char, SYMBOL))
                     current_token = ""
                 elif char == " ":
                     if current_token:
                         token_type = self.get_token_type(current_token)
-                        otuput_lines.append(self.get_line(current_token, token_type))
+                        output_tokens.append(Token(current_token, token_type))
                     current_token = ""
                 else:
                     current_token += char
 
-        otuput_lines.append("</tokens>")
-        otuput_lines.append("")
-        return otuput_lines
-
-
-def main(path):
-    if not os.path.isfile(path):
-        raise ValueError("Unknown path type")
-    
-    with open(path, "r") as f:
-        lines = f.readlines()
-    print(f"Read {path}")
-
-    head, tail = os.path.split(path)
-    if not tail:
-        raise ValueError
-
-    assert tail.endswith(".jack")
-    fn = tail.split(".jack")[0]
-    save_dir = os.path.join(head, "output")
-    out_path = os.path.join(save_dir, f"{fn}T.xml")
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-
-    tokenizer = Tokenizer()
-    output_lines = tokenizer.tokenize(lines)
-
-    with open(out_path, "w") as f:
-        f.writelines("\n".join(output_lines))
-
-    print(f"Output written to {out_path}")
-    print("Done")
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("path")
-    args = parser.parse_args()
-    main(args.path)
+        return output_tokens
