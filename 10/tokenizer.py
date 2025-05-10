@@ -4,7 +4,6 @@ from definitions import (
     UNARY_OPS, BINARY_OPS
 )
 
-
 class Token:
     def __init__(self, token_name, token_type):
         assert token_type in TOKEN_TYPES

@@ -1,7 +1,6 @@
 from tokenizer import Token
 
 class CompilationEngine:
-
     def __init__(self, tokens: list[Token]):
         self.tokens = tokens
         self.current_position = 0

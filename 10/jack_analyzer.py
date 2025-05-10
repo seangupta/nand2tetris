@@ -1,8 +1,7 @@
 import argparse
 import os
 
-from definitions import ESCAPED_SYMBOLS, STRING_CONSTANT
-from tokenizer import Tokenizer, Token
+from tokenizer import Tokenizer
 from compilation_engine import CompilationEngine
 
 class JackAnalyzer:
@@ -10,9 +9,21 @@ class JackAnalyzer:
         pass
 
     def analyze(self, path, compile):
-        if not os.path.isfile(path):
+        if os.path.isfile(path):
+            self.analyze_single_file(path, compile)
+
+        elif os.path.isdir(path):
+            for fn in os.listdir(path):
+                if not fn.endswith(".jack"):
+                    continue
+                full_path = os.path.join(path, fn)
+                self.analyze_single_file(full_path, compile)
+        else:
             raise ValueError("Unknown path type")
         
+        print("Done")
+        
+    def analyze_single_file(self, path, compile):
         with open(path, "r") as f:
             lines = f.readlines()
         print(f"Read {path}")
@@ -52,7 +63,6 @@ class JackAnalyzer:
             f.writelines("\n".join(output_lines))
 
         print(f"Output written to {out_path}")
-        print("Done")
 
     def get_output_tokenization(self, output_tokens):
         output_lines = ["<tokens>"]          
