@@ -1,4 +1,7 @@
-from definitions import KEYWORD, SYMBOL, STRING_CONSTANT, INTEGER_CONSTANT, IDENTIFIER, KEYWORDS, SYMBOLS, TOKEN_TYPES
+from definitions import (
+    KEYWORD, SYMBOL, STRING_CONSTANT, INTEGER_CONSTANT, 
+    IDENTIFIER, KEYWORDS, SYMBOLS, TOKEN_TYPES, ESCAPED_SYMBOLS
+)
 
 
 class Token:
@@ -9,6 +12,40 @@ class Token:
         self.token_name = token_name
         self.token_type = token_type
 
+        print(f"Token: {self.token_name} {self.token_type}")
+
+    @property
+    def is_identifier(self):
+        return self.token_type == IDENTIFIER
+    
+    def is_symbol(self, name):
+        return self.token_name == name and self.token_type == SYMBOL
+    
+    def is_keyword(self, name):
+        return self.token_name == name and self.token_type == KEYWORD
+    
+    @property
+    def is_type(self):
+        return (
+            self.is_keyword("int") 
+            or self.is_keyword("char")
+            or self.is_keyword("boolean")
+            or self.is_identifier
+        )
+    
+    def get_line(self):
+        token_name = self.token_name
+        token_type = self.token_type
+
+        if token_type == STRING_CONSTANT:
+            line =  f"<{token_type}> {token_name[1:-1]} </{token_type}>"
+        elif token_name in ESCAPED_SYMBOLS:
+            line =  f"<{token_type}> {ESCAPED_SYMBOLS[token_name]} </{token_type}>"
+        else:
+            line =  f"<{token_type}> {token_name} </{token_type}>"
+        print(line)
+        return line
+
 
 class Tokenizer():
     def __init__(self):
@@ -16,7 +53,6 @@ class Tokenizer():
     
     @staticmethod
     def get_token_type(token):
-        print(f"Token: {token}")
         if token in KEYWORDS:
             return KEYWORD
         elif token in SYMBOLS:

@@ -1,4 +1,6 @@
 .DS_Store
+.vscode
+__pycache__
 07/.DS_Store
 07/BasicTest/BasicTest.cmp
 07/BasicTest/BasicTest.tst
@@ -48,3 +50,10 @@
 08/StaticsTest/StaticsTestVME.tst  
 08/StaticsTest/Sys.vm  
 09/Tetris/*.vm
+10/ArrayTest/Main.*
+10/ExpressionLessSquare/Main.*
+10/ExpressionLessSquare/Square.*
+10/ExpressionLessSquare/SquareGames.*
+10/Square/Main.*
+10/Square/Square.*
+10/Square/SquareGames.*
