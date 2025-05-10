@@ -1,6 +1,6 @@
 from definitions import (
     KEYWORD, SYMBOL, STRING_CONSTANT, INTEGER_CONSTANT, 
-    IDENTIFIER, KEYWORDS, SYMBOLS, TOKEN_TYPES, ESCAPED_SYMBOLS
+    IDENTIFIER, KEYWORDS, SYMBOLS, TOKEN_TYPES, ESCAPED_SYMBOLS, KEYWORD_CONSTANTS
 )
 
 
@@ -23,6 +23,10 @@ class Token:
     
     def is_keyword(self, name):
         return self.token_name == name and self.token_type == KEYWORD
+    
+    @property
+    def is_keyword_constant(self):
+        return self.token_name in KEYWORD_CONSTANTS
     
     @property
     def is_type(self):

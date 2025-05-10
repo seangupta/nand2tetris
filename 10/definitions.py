@@ -30,6 +30,13 @@ KEYWORDS = [
     'return',
 ]
 
+KEYWORD_CONSTANTS = [
+    'true',
+    'false',
+    'null',
+    'this',
+]
+
 SYMBOLS = [
     '{', 
     '}', 

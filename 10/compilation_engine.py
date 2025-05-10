@@ -182,12 +182,23 @@ class CompilationEngine:
     @add_tags("term")
     def compile_term(self):
         # TODO: Complete
-        self.process_varname()
+
+        if self.current_token.is_identifier:
+            self.process_varname()
+        elif self.current_token.is_keyword_constant:
+            self.process_keyword(self.current_token.token_name)
+        else:
+            raise NotImplementedError
 
     @add_tags("expressionList")
-    def compile_expression_list(self):
-        # TODO: Complete
-        pass
+    def compile_expression_list(self):        
+        if self.current_token.is_symbol(")"):
+            return
+        
+        self.compile_expression()
+        while self.current_token.is_symbol(","):
+            self.process_symbol(",")
+            self.compile_expression()
     
     def compile_statement(self):
         assert self.starting_statement()
@@ -249,14 +260,22 @@ class CompilationEngine:
         # subroutine call
         # self.compile_expression()
 
-        assert self.current_token.is_identifier
-        self.process_current_token()
+        if self.next_token.is_symbol("."):
+            assert self.current_token.is_identifier
+            self.process_current_token()
 
-        self.process_symbol(".")
-        self.process_subroutine_name()
-        self.process_symbol("(")
-        self.compile_expression_list()
-        self.process_symbol(")")
+            self.process_symbol(".")
+            self.process_subroutine_name()
+            self.process_symbol("(")
+            self.compile_expression_list()
+            self.process_symbol(")")
+        else:
+            assert self.current_token.is_identifier
+            self.process_current_token()
+
+            self.process_symbol("(")
+            self.compile_expression_list()
+            self.process_symbol(")")
 
         self.process_symbol(";")
     
