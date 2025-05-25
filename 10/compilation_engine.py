@@ -1,4 +1,5 @@
 from tokenizer import Token
+from definitions import UNARY_OPS_JACK_TO_VM, BINARY_OPS_JACK_TO_VM, KEYWORD_CONSTANTS_JACK_TO_VM
 
 class SymbolTable:
     def __init__(self):
@@ -26,6 +27,7 @@ class CompilationEngine:
         self.class_symbol_table = SymbolTable()
         self.method_symbol_table = SymbolTable()
         self.compiled_vm_lines = []
+        self.num_labels = 0
 
     @property
     def current_token(self):
@@ -205,8 +207,7 @@ class CompilationEngine:
         self.process_subroutine_name(declaration=True)
 
         if self.generate_vm_code:
-            num_local_vars = self.method_symbol_table.get_num_local_vars()
-            vm_line = f"function {self.current_class_name}.{subroutine_name} {num_local_vars}"
+            vm_line = "PLACEHOLDER"
             self.compiled_vm_lines.append(vm_line)
 
             if subroutine_type == "method":
@@ -225,6 +226,17 @@ class CompilationEngine:
         self.compile_parameter_list()
         self.process_symbol(")")
         self.compile_subroutine_body()
+
+        # Only now know number of local vars
+        if self.generate_vm_code:
+            num_local_vars = self.method_symbol_table.get_num_local_vars()
+            vm_line = f"function {self.current_class_name}.{subroutine_name} {num_local_vars}"
+
+            for i, line in enumerate(self.compiled_vm_lines[::-1]):
+                if line == "PLACEHOLDER":
+                    self.compiled_vm_lines[len(self.compiled_vm_lines) - 1 - i] = vm_line
+                    break
+
 
     @add_tags("parameterList")
     def compile_parameter_list(self):
@@ -302,26 +314,22 @@ class CompilationEngine:
             self.compile_term()
 
             if self.generate_vm_code:
-                match binary_op:
-                    case "+":
-                        vm_line = "add"
-                    case "-":
-                        vm_line = "sub"
-                    case "*":
-                        vm_line = "call Math.multiply 2"
-                    case "/":
-                        vm_line = "call Math.divide 2"
-                    case _:
-                        raise ValueError(f"Unknown binary op {binary_op}")
-                    
+                vm_line = BINARY_OPS_JACK_TO_VM[binary_op]
                 self.compiled_vm_lines.append(vm_line)
 
     @add_tags("term")
     def compile_term(self):
         if self.current_token.is_keyword_constant:
+            keyword_constant = self.current_token.token_name
             self.process_current_token()
+            if self.generate_vm_code:
+                vm_lines = KEYWORD_CONSTANTS_JACK_TO_VM[keyword_constant]
+                self.compiled_vm_lines.extend(vm_lines)
         elif self.current_token.is_string_constant:
+            string_constant = self.current_token.token_name
             self.process_current_token()
+            if self.generate_vm_code:
+                raise NotImplementedError
         elif self.current_token.is_integer_constant:
             if self.generate_vm_code:
                 vm_line = f"push constant {self.current_token.token_name}"
@@ -337,11 +345,7 @@ class CompilationEngine:
             self.process_current_token()
             self.compile_term()
             if self.generate_vm_code:
-                match unary_op:
-                    case "-":
-                        vm_line = "neg"
-                    case _:
-                        raise ValueError(f"Unknown unary op: {unary_op}")
+                vm_line = UNARY_OPS_JACK_TO_VM[unary_op]
                 self.compiled_vm_lines.append(vm_line)
         elif self.next_token.is_symbol('['):
             self.process_varname()
@@ -353,7 +357,9 @@ class CompilationEngine:
         elif self.next_token.is_symbol("."):
             self.process_subroutine_attr()
         elif self.current_token.is_identifier:
-            self.process_varname()
+            symbol = self.process_varname()
+            vm_line = f"push {symbol['kind']} {symbol['index']}"
+            self.compiled_vm_lines.append(vm_line)
         else:
             raise ValueError(f"Couldn't compile term: {self.current_token.token_name}")
     
@@ -412,9 +418,26 @@ class CompilationEngine:
         self.process_symbol("(")
         self.compile_expression()
         self.process_symbol(")")
+
+        if self.generate_vm_code:
+            label1 = self.get_label()
+            vm_lines = [
+                "not",
+                f"if-goto {label1}"
+            ]
+            self.compiled_vm_lines.extend(vm_lines)
+
         self.process_symbol("{")
         self.compile_statements()
         self.process_symbol("}")
+
+        if self.generate_vm_code:
+            label2 = self.get_label()
+            vm_lines = [
+                f"goto {label2}",
+                f"label {label1}"
+            ]
+            self.compiled_vm_lines.extend(vm_lines)
 
         if self.current_token.is_keyword("else"):
             self.process_keyword("else")
@@ -422,15 +445,40 @@ class CompilationEngine:
             self.compile_statements()
             self.process_symbol("}")
 
+        if self.generate_vm_code:
+            vm_line = f"label {label2}"
+            self.compiled_vm_lines.append(vm_line)
+
     @add_tags("whileStatement")
     def compile_while_statement(self):
+        if self.generate_vm_code:
+            label1 = self.get_label()
+            vm_line = f"label {label1}"
+            self.compiled_vm_lines.append(vm_line)
+
         self.process_keyword("while")
         self.process_symbol("(")
         self.compile_expression()
         self.process_symbol(")")
+
+        if self.generate_vm_code:
+            label2 = self.get_label()
+            vm_lines = [
+                "not",
+                f"if-goto {label2}"
+            ]
+            self.compiled_vm_lines.extend(vm_lines)
+
         self.process_symbol("{")
         self.compile_statements()
         self.process_symbol("}")
+
+        if self.generate_vm_code:
+            vm_lines = [
+                f"goto {label1}",
+                f"label {label2}"
+            ]
+            self.compiled_vm_lines.extend(vm_lines)
     
     @add_tags("doStatement")
     def compile_do_statement(self):
@@ -515,3 +563,8 @@ class CompilationEngine:
             or self.current_token.is_keyword("function") 
             or self.current_token.is_keyword("method")
             )
+    
+    def get_label(self):
+        label = f"L{self.num_labels + 1}"
+        self.num_labels += 1
+        return label

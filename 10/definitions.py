@@ -37,6 +37,13 @@ KEYWORD_CONSTANTS = [
     'this',
 ]
 
+KEYWORD_CONSTANTS_JACK_TO_VM = {
+    "true": ["push constant 1", "neg"],
+    "false": ["push constant 0"],
+    "null": ["push constant 0"],
+    "this": ["push pointer 0"],
+}
+
 SYMBOLS = [
     '{', 
     '}', 
@@ -69,4 +76,21 @@ ESCAPED_SYMBOLS = {
 
 UNARY_OPS = ['-', '~']
 
+UNARY_OPS_JACK_TO_VM = {
+    "-": "neg",
+    "~": "not",
+}
+
 BINARY_OPS = ['+', '-', '*', '/', '&', '|', '<', '>', '=']
+
+BINARY_OPS_JACK_TO_VM = {
+    "+": "add",
+    "-": "sub",
+    "*": "call Math.multiply 2",
+    "/": "call Math.divide 2",
+    "&": "and",
+    "|": "or",
+    "<": "lt",
+    ">": "gt",
+    "=": "eq",
+}
