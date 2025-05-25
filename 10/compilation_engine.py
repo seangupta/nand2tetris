@@ -12,16 +12,20 @@ class SymbolTable:
 
     def get_index(self, kind):
         return len([v for v in self.symbols.values() if v["kind"] == kind])
+    
+    def get_num_local_vars(self):
+        return len([v for v in self.symbols.values() if v["kind"] == "local"])
 
 class CompilationEngine:
-    def __init__(self, tokens: list[Token], generate_symbol_table):
+    def __init__(self, tokens: list[Token], generate_vm_code):
         self.tokens = tokens
         self.current_position = 0
-        self.output_lines = []
+        self.xml_output_lines = []
         self.indentation_level = 0
-        self.generate_symbol_table = generate_symbol_table
+        self.generate_vm_code = generate_vm_code
         self.class_symbol_table = SymbolTable()
         self.method_symbol_table = SymbolTable()
+        self.compiled_vm_lines = []
 
     @property
     def current_token(self):
@@ -41,28 +45,30 @@ class CompilationEngine:
     def add_opening_tag(self, tag):
         line = f"<{tag}>"
         line = self.add_indentation(line)
-        self.output_lines.append(line)
+        self.xml_output_lines.append(line)
 
     def add_closing_tag(self, tag):
         line = f"</{tag}>"
         line = self.add_indentation(line)
-        self.output_lines.append(line)
+        self.xml_output_lines.append(line)
 
     def add_tags(tag):
         def decorator(func):
             def wrapper(self):
                 self.add_opening_tag(tag)
                 self.indentation_level += 1
-                func(self)
+                res = func(self)
                 self.indentation_level -= 1
                 self.add_closing_tag(tag)
+                return res
             return wrapper
         return decorator
 
     def process_current_token(self, declaration=False, is_classname=False, maybe_classname=False, is_subroutine_name=False, ignore=False):
         assert isinstance(self.current_token, Token)
+        symbol = None
 
-        if self.generate_symbol_table and self.current_token.is_identifier and not ignore:
+        if self.generate_vm_code and self.current_token.is_identifier and not ignore:
             name = self.current_token.token_name
 
             if is_classname:
@@ -99,16 +105,17 @@ class CompilationEngine:
                 line = f"<{info_tag}> {value} </{info_tag}>"
                 print(line)
                 line = self.add_indentation(line)
-                self.output_lines.append(line)
+                self.xml_output_lines.append(line)
 
             self.indentation_level -= 1
             self.add_closing_tag(tag)
         else:
             line = self.current_token.get_line()
             line = self.add_indentation(line)
-            self.output_lines.append(line)
+            self.xml_output_lines.append(line)
 
         self.current_position += 1
+        return symbol
 
     def process_symbol(self, name):
         assert self.current_token.is_symbol(name)
@@ -116,7 +123,8 @@ class CompilationEngine:
     
     def process_varname(self, declaration=False):
         assert self.current_token.is_identifier
-        self.process_current_token(declaration=declaration)
+        symbol = self.process_current_token(declaration=declaration)
+        return symbol
 
     def process_class_name(self):
         self.process_keyword("class")
@@ -135,13 +143,14 @@ class CompilationEngine:
 
     @add_tags("class")
     def compile_class(self):
-        if self.generate_symbol_table:
+        if self.generate_vm_code:
             # Previous symbols are irrelevant
             self.class_symbol_table = SymbolTable()
 
         self.process_class_name()
 
         assert self.current_token.is_identifier
+        self.current_class_name = self.current_token.token_name
         self.process_current_token(is_classname=True, declaration=True)
 
         self.process_symbol("{")
@@ -166,7 +175,7 @@ class CompilationEngine:
 
         name = self.current_token.token_name
     
-        if self.generate_symbol_table:
+        if self.generate_vm_code:
             self.class_symbol_table.add_symbol(kind, data_type, name, True)
 
         self.process_varname(declaration=True)
@@ -176,7 +185,7 @@ class CompilationEngine:
 
             name = self.current_token.token_name
 
-            if self.generate_symbol_table:
+            if self.generate_vm_code:
                 self.class_symbol_table.add_symbol(kind, data_type, name, True)
 
             self.process_current_token(declaration=True)
@@ -186,13 +195,33 @@ class CompilationEngine:
     @add_tags("subroutineDec")
     def compile_subroutine_dec(self):
         assert self.starting_subroutine_dec()
+        subroutine_type = self.current_token.token_name
         self.process_current_token()
         
         assert self.current_token.is_keyword("void") or self.current_token.is_type
         self.process_current_token(ignore=True)
 
+        subroutine_name = self.current_token.token_name
         self.process_subroutine_name(declaration=True)
+
+        if self.generate_vm_code:
+            num_local_vars = self.method_symbol_table.get_num_local_vars()
+            vm_line = f"function {self.current_class_name}.{subroutine_name} {num_local_vars}"
+            self.compiled_vm_lines.append(vm_line)
+
+            if subroutine_type == "method":
+                vm_lines = [
+                    "push argument 0",
+                    "pop pointer 0"
+                ]
+                self.compiled_vm_lines.extend(vm_lines)
+
         self.process_symbol("(")
+
+        if self.generate_vm_code:
+            if subroutine_type == "method":
+                self.method_symbol_table.add_symbol("argument", self.current_class_name, "this", False)
+
         self.compile_parameter_list()
         self.process_symbol(")")
         self.compile_subroutine_body()
@@ -205,7 +234,7 @@ class CompilationEngine:
 
             name = self.current_token.token_name
 
-            if self.generate_symbol_table:
+            if self.generate_vm_code:
                 self.method_symbol_table.add_symbol("argument", data_type, name, True)
 
             self.process_current_token(declaration=True)
@@ -222,7 +251,7 @@ class CompilationEngine:
 
                 name = self.current_token.token_name
                 
-                if self.generate_symbol_table:
+                if self.generate_vm_code:
                     self.method_symbol_table.add_symbol("argument", data_type, name, True)
 
                 self.process_current_token(declaration=True)
@@ -246,7 +275,7 @@ class CompilationEngine:
 
         name = self.current_token.token_name
 
-        if self.generate_symbol_table:
+        if self.generate_vm_code:
             self.method_symbol_table.add_symbol("local", data_type, name, True)
 
         self.process_varname(declaration=True)
@@ -256,7 +285,7 @@ class CompilationEngine:
 
             name = self.current_token.token_name
             
-            if self.generate_symbol_table:
+            if self.generate_vm_code:
                 self.method_symbol_table.add_symbol("local", data_type, name, True)
 
             self.process_current_token()
@@ -267,8 +296,25 @@ class CompilationEngine:
     def compile_expression(self):
         self.compile_term()
         while self.current_token.is_binary_op:
+            binary_op = self.current_token.token_name
+
             self.process_current_token()
             self.compile_term()
+
+            if self.generate_vm_code:
+                match binary_op:
+                    case "+":
+                        vm_line = "add"
+                    case "-":
+                        vm_line = "sub"
+                    case "*":
+                        vm_line = "call Math.multiply 2"
+                    case "/":
+                        vm_line = "call Math.divide 2"
+                    case _:
+                        raise ValueError(f"Unknown binary op {binary_op}")
+                    
+                self.compiled_vm_lines.append(vm_line)
 
     @add_tags("term")
     def compile_term(self):
@@ -277,6 +323,9 @@ class CompilationEngine:
         elif self.current_token.is_string_constant:
             self.process_current_token()
         elif self.current_token.is_integer_constant:
+            if self.generate_vm_code:
+                vm_line = f"push constant {self.current_token.token_name}"
+                self.compiled_vm_lines.append(vm_line)
             self.process_current_token()
         elif self.current_token.is_symbol("("):
             self.process_current_token()
@@ -284,8 +333,16 @@ class CompilationEngine:
             assert self.current_token.is_symbol(")")
             self.process_current_token()
         elif self.current_token.is_unary_op:
+            unary_op = self.current_token.token_name
             self.process_current_token()
             self.compile_term()
+            if self.generate_vm_code:
+                match unary_op:
+                    case "-":
+                        vm_line = "neg"
+                    case _:
+                        raise ValueError(f"Unknown unary op: {unary_op}")
+                self.compiled_vm_lines.append(vm_line)
         elif self.next_token.is_symbol('['):
             self.process_varname()
             self.process_symbol("[")
@@ -301,14 +358,19 @@ class CompilationEngine:
             raise ValueError(f"Couldn't compile term: {self.current_token.token_name}")
     
     @add_tags("expressionList")
-    def compile_expression_list(self):        
+    def compile_expression_list(self):
+        num_expressions = 0        
         if self.current_token.is_symbol(")"):
-            return
+            return num_expressions
         
         self.compile_expression()
+        num_expressions += 1
         while self.current_token.is_symbol(","):
             self.process_symbol(",")
             self.compile_expression()
+            num_expressions += 1
+
+        return num_expressions
     
     def compile_statement(self):
         assert self.starting_statement()
@@ -329,7 +391,7 @@ class CompilationEngine:
     @add_tags("letStatement")
     def compile_let_statement(self):
         self.process_keyword("let")
-        self.process_varname()
+        symbol = self.process_varname()
 
         if self.current_token.is_symbol("["):
             self.process_symbol("[")
@@ -339,6 +401,10 @@ class CompilationEngine:
         self.process_symbol("=")
         self.compile_expression()
         self.process_symbol(";")
+
+        if self.generate_vm_code:
+            vm_line = f"pop {symbol['kind']} {symbol['index']}"
+            self.compiled_vm_lines.append(vm_line)
     
     @add_tags("ifStatement")
     def compile_if_statement(self):
@@ -377,21 +443,39 @@ class CompilationEngine:
 
         self.process_symbol(";")
 
+        if self.generate_vm_code:
+            # Dummy value
+            vm_line = "pop temp 0"
+            self.compiled_vm_lines.append(vm_line)
+
     def process_subroutine_no_attr(self):
+        subroutine_name = self.current_token.token_name
         self.process_subroutine_name(declaration=False)
         self.process_symbol("(")
-        self.compile_expression_list()
+        num_args = self.compile_expression_list()
         self.process_symbol(")")
+
+        if self.generate_vm_code:
+            vm_line = f"call {subroutine_name} {num_args}"
+            self.compiled_vm_lines.append(vm_line)
 
     def process_subroutine_attr(self):
         assert self.current_token.is_identifier
+
+        prefix = self.current_token.token_name
         self.process_current_token(maybe_classname=True, declaration=False)
 
         self.process_symbol(".")
+
+        subroutine_name = self.current_token.token_name
         self.process_subroutine_name(declaration=False)
         self.process_symbol("(")
-        self.compile_expression_list()
+        num_args = self.compile_expression_list()
         self.process_symbol(")")
+
+        if self.generate_vm_code:
+            vm_line = f"call {prefix}.{subroutine_name} {num_args}"
+            self.compiled_vm_lines.append(vm_line)
 
     @add_tags("returnStatement")
     def compile_return_statement(self):
@@ -399,6 +483,15 @@ class CompilationEngine:
 
         if not self.current_token.is_symbol(";"):
             self.compile_expression()
+        else:
+            if self.generate_vm_code:
+                # Dummy value
+                vm_line = "push constant 0"
+                self.compiled_vm_lines.append(vm_line)
+
+        if self.generate_vm_code:
+            vm_line = "return"
+            self.compiled_vm_lines.append(vm_line)
         
         self.process_symbol(";")
 
