@@ -1,11 +1,27 @@
 from tokenizer import Token
 
+class SymbolTable:
+    def __init__(self):
+        self.symbols = {}
+
+    def add_symbol(self, kind, data_type, name, declaration):
+        assert name not in self.symbols
+        assert isinstance(declaration, bool)
+        index = self.get_index(kind)
+        self.symbols[name] = {"kind": kind, "type": data_type, "index": index, "declaration": declaration}
+
+    def get_index(self, kind):
+        return len([v for v in self.symbols.values() if v["kind"] == kind])
+
 class CompilationEngine:
-    def __init__(self, tokens: list[Token]):
+    def __init__(self, tokens: list[Token], generate_symbol_table):
         self.tokens = tokens
         self.current_position = 0
         self.output_lines = []
         self.indentation_level = 0
+        self.generate_symbol_table = generate_symbol_table
+        self.class_symbol_table = SymbolTable()
+        self.method_symbol_table = SymbolTable()
 
     @property
     def current_token(self):
@@ -43,20 +59,64 @@ class CompilationEngine:
             return wrapper
         return decorator
 
-    def process_current_token(self):
+    def process_current_token(self, declaration=False, is_classname=False, maybe_classname=False, is_subroutine_name=False, ignore=False):
         assert isinstance(self.current_token, Token)
-        line = self.current_token.get_line()
-        line = self.add_indentation(line)
-        self.output_lines.append(line)
+
+        if self.generate_symbol_table and self.current_token.is_identifier and not ignore:
+            name = self.current_token.token_name
+
+            if is_classname:
+                symbol = {"kind": "class"}
+            elif is_subroutine_name:
+                symbol = {"kind": "subroutine"}
+            elif name in self.method_symbol_table.symbols:
+                symbol = self.method_symbol_table.symbols[name]
+            elif name in self.class_symbol_table.symbols:
+                symbol = self.class_symbol_table.symbols[name]
+            elif maybe_classname:
+                is_classname = True
+                symbol = {"kind": "class"}
+            else:
+                raise ValueError(f"WARNING: Not found in symbol table: {self.current_token}")
+
+            tag = "identifier"
+            self.add_opening_tag(tag)
+            self.indentation_level += 1
+            
+            if is_classname or is_subroutine_name:
+                info_tags = ["name", "kind", "declaration"]
+            else:
+                info_tags = ["name", "kind", "type", "index", "declaration"]
+
+            for info_tag in info_tags:
+                if info_tag == "name":
+                    value = name
+                elif info_tag == "declaration":
+                    value = declaration
+                else:
+                    value = symbol[info_tag]
+
+                line = f"<{info_tag}> {value} </{info_tag}>"
+                print(line)
+                line = self.add_indentation(line)
+                self.output_lines.append(line)
+
+            self.indentation_level -= 1
+            self.add_closing_tag(tag)
+        else:
+            line = self.current_token.get_line()
+            line = self.add_indentation(line)
+            self.output_lines.append(line)
+
         self.current_position += 1
 
     def process_symbol(self, name):
         assert self.current_token.is_symbol(name)
         self.process_current_token()
     
-    def process_varname(self):
+    def process_varname(self, declaration=False):
         assert self.current_token.is_identifier
-        self.process_current_token()
+        self.process_current_token(declaration=declaration)
 
     def process_class_name(self):
         self.process_keyword("class")
@@ -65,20 +125,24 @@ class CompilationEngine:
         assert self.current_token.is_keyword(name)
         self.process_current_token()
 
-    def process_subroutine_name(self):
+    def process_subroutine_name(self, declaration):
         assert self.current_token.is_identifier
-        self.process_current_token()
+        self.process_current_token(is_subroutine_name=True, declaration=declaration)
 
     def process_type(self):
         assert self.current_token.is_type
-        self.process_current_token()
+        self.process_current_token(ignore=True)
 
     @add_tags("class")
     def compile_class(self):
+        if self.generate_symbol_table:
+            # Previous symbols are irrelevant
+            self.class_symbol_table = SymbolTable()
+
         self.process_class_name()
 
         assert self.current_token.is_identifier
-        self.process_current_token()
+        self.process_current_token(is_classname=True, declaration=True)
 
         self.process_symbol("{")
 
@@ -86,6 +150,7 @@ class CompilationEngine:
             self.compile_class_var_dec()
         
         while self.starting_subroutine_dec():
+            self.method_symbol_table = SymbolTable()
             self.compile_subroutine_dec()
 
         self.process_symbol("}")
@@ -93,14 +158,28 @@ class CompilationEngine:
     @add_tags("classVarDec")
     def compile_class_var_dec(self):
         assert self.current_token.is_keyword("static") or self.current_token.is_keyword("field")
+        kind = self.current_token.token_name
         self.process_current_token()
-
+        
+        data_type = self.current_token.token_name
         self.process_type()
-        self.process_varname()
+
+        name = self.current_token.token_name
+    
+        if self.generate_symbol_table:
+            self.class_symbol_table.add_symbol(kind, data_type, name, True)
+
+        self.process_varname(declaration=True)
 
         while self.current_token.is_symbol(",") and self.next_token.is_identifier:
             self.process_current_token()
-            self.process_current_token()
+
+            name = self.current_token.token_name
+
+            if self.generate_symbol_table:
+                self.class_symbol_table.add_symbol(kind, data_type, name, True)
+
+            self.process_current_token(declaration=True)
 
         self.process_symbol(";")
     
@@ -110,9 +189,9 @@ class CompilationEngine:
         self.process_current_token()
         
         assert self.current_token.is_keyword("void") or self.current_token.is_type
-        self.process_current_token()
+        self.process_current_token(ignore=True)
 
-        self.process_subroutine_name()
+        self.process_subroutine_name(declaration=True)
         self.process_symbol("(")
         self.compile_parameter_list()
         self.process_symbol(")")
@@ -121,8 +200,15 @@ class CompilationEngine:
     @add_tags("parameterList")
     def compile_parameter_list(self):
         if self.current_token.is_type and self.next_token.is_identifier:
+            data_type = self.current_token.token_name
             self.process_current_token()
-            self.process_current_token()
+
+            name = self.current_token.token_name
+
+            if self.generate_symbol_table:
+                self.method_symbol_table.add_symbol("argument", data_type, name, True)
+
+            self.process_current_token(declaration=True)
 
             while (
                 self.current_token.is_symbol(",") 
@@ -130,8 +216,16 @@ class CompilationEngine:
                 and self.next_next_token.is_identifier
                 ):
                 self.process_current_token()
+
+                data_type = self.current_token.token_name
                 self.process_current_token()
-                self.process_current_token()
+
+                name = self.current_token.token_name
+                
+                if self.generate_symbol_table:
+                    self.method_symbol_table.add_symbol("argument", data_type, name, True)
+
+                self.process_current_token(declaration=True)
 
     @add_tags("subroutineBody")
     def compile_subroutine_body(self):
@@ -146,11 +240,25 @@ class CompilationEngine:
     @add_tags("varDec")
     def compile_var_dec(self):
         self.process_keyword("var")
+
+        data_type = self.current_token.token_name
         self.process_type()
-        self.process_varname()
+
+        name = self.current_token.token_name
+
+        if self.generate_symbol_table:
+            self.method_symbol_table.add_symbol("local", data_type, name, True)
+
+        self.process_varname(declaration=True)
 
         while self.current_token.is_symbol(",") and self.next_token.is_identifier:
             self.process_current_token()
+
+            name = self.current_token.token_name
+            
+            if self.generate_symbol_table:
+                self.method_symbol_table.add_symbol("local", data_type, name, True)
+
             self.process_current_token()
 
         self.process_symbol(";")
@@ -270,17 +378,17 @@ class CompilationEngine:
         self.process_symbol(";")
 
     def process_subroutine_no_attr(self):
-        self.process_subroutine_name()
+        self.process_subroutine_name(declaration=False)
         self.process_symbol("(")
         self.compile_expression_list()
         self.process_symbol(")")
 
     def process_subroutine_attr(self):
         assert self.current_token.is_identifier
-        self.process_current_token()
+        self.process_current_token(maybe_classname=True, declaration=False)
 
         self.process_symbol(".")
-        self.process_subroutine_name()
+        self.process_subroutine_name(declaration=False)
         self.process_symbol("(")
         self.compile_expression_list()
         self.process_symbol(")")

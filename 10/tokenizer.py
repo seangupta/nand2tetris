@@ -8,11 +8,12 @@ class Token:
     def __init__(self, token_name, token_type):
         assert token_type in TOKEN_TYPES
         assert isinstance(token_name, str)
-
         self.token_name = token_name
         self.token_type = token_type
+        print(f"Token: {self}")
 
-        print(f"Token: {self.token_name} {self.token_type}")
+    def __repr__(self):
+        return f"{self.token_name} {self.token_type}"
 
     @property
     def is_identifier(self):
