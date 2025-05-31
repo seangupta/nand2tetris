@@ -341,10 +341,22 @@ class CompilationEngine:
                 vm_lines = KEYWORD_CONSTANTS_JACK_TO_VM[keyword_constant]
                 self.compiled_vm_lines.extend(vm_lines)
         elif self.current_token.is_string_constant:
-            string_constant = self.current_token.token_name
-            self.process_current_token()
             if self.generate_vm_code:
-                raise NotImplementedError
+                # Exclude leading and ending quotes
+                string_constant = self.current_token.token_name[1:-1]
+                string_length = len(string_constant)
+                vm_lines = [
+                    f"push constant {string_length}",
+                    "call String.new 1",
+                ]
+                self.compiled_vm_lines.extend(vm_lines)
+                for char in string_constant:
+                    vm_lines = [
+                        f"push constant {ord(char)}",
+                        f"call String.appendChar 2"
+                    ]
+                    self.compiled_vm_lines.extend(vm_lines)
+            self.process_current_token()
         elif self.current_token.is_integer_constant:
             if self.generate_vm_code:
                 vm_line = f"push constant {self.current_token.token_name}"
@@ -416,22 +428,41 @@ class CompilationEngine:
     def compile_let_statement(self):
         self.process_keyword("let")
         symbol = self.process_varname()
+        if self.generate_vm_code:
+            kind = symbol["kind"]
+            if kind == "field":
+                kind = "this"
 
-        if self.current_token.is_symbol("["):
+        if self.current_token.is_symbol("["):            
+            if self.generate_vm_code:
+                vm_line = f"push {kind} {symbol['index']}"
+                self.compiled_vm_lines.append(vm_line)
             self.process_symbol("[")
             self.compile_expression()
             self.process_symbol("]")
-
-        self.process_symbol("=")
-        self.compile_expression()
-        self.process_symbol(";")
-
-        if self.generate_vm_code:
-            if symbol["kind"] == "field":
-                vm_line = f"pop this {symbol['index']}"
-            else:
-                vm_line = f"pop {symbol['kind']} {symbol['index']}"
-            self.compiled_vm_lines.append(vm_line)
+            if self.generate_vm_code:
+                vm_line = "add"
+                self.compiled_vm_lines.append(vm_line)
+            self.process_symbol("=")
+            self.compile_expression()
+            self.process_symbol(";")
+            if self.generate_vm_code:
+                vm_lines = [
+                    "pop pointer 1",
+                    "push that 0",
+                    "pop temp 0",
+                    "pop pointer 1",
+                    "push temp 0",
+                    "pop that 0",
+                ]
+                self.compiled_vm_lines.extend(vm_lines)
+        else:
+            self.process_symbol("=")
+            self.compile_expression()
+            self.process_symbol(";")
+            if self.generate_vm_code:
+                vm_line = f"pop {kind} {symbol['index']}"
+                self.compiled_vm_lines.append(vm_line)
     
     @add_tags("ifStatement")
     def compile_if_statement(self):
