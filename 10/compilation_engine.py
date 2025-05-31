@@ -16,6 +16,9 @@ class SymbolTable:
     
     def get_num_local_vars(self):
         return len([v for v in self.symbols.values() if v["kind"] == "local"])
+    
+    def get_num_field_vars(self):
+        return len([v for v in self.symbols.values() if v["kind"] == "field"])
 
 class CompilationEngine:
     def __init__(self, tokens: list[Token], generate_vm_code):
@@ -216,6 +219,18 @@ class CompilationEngine:
                     "pop pointer 0"
                 ]
                 self.compiled_vm_lines.extend(vm_lines)
+            elif subroutine_type == "constructor":
+                num_field_vars = self.class_symbol_table.get_num_field_vars()
+                vm_lines = [
+                    f"push constant {num_field_vars}",
+                    "call Memory.alloc 1",
+                    "pop pointer 0",
+                ]
+                self.compiled_vm_lines.extend(vm_lines)
+            elif subroutine_type == "function":
+                pass
+            else:
+                raise ValueError(f"Unknown subroutine type {subroutine_type}")
 
         self.process_symbol("(")
 
@@ -358,7 +373,10 @@ class CompilationEngine:
             self.process_subroutine_attr()
         elif self.current_token.is_identifier:
             symbol = self.process_varname()
-            vm_line = f"push {symbol['kind']} {symbol['index']}"
+            if symbol["kind"] == "field":
+                vm_line = f"push this {symbol['index']}"
+            else:
+                vm_line = f"push {symbol['kind']} {symbol['index']}"
             self.compiled_vm_lines.append(vm_line)
         else:
             raise ValueError(f"Couldn't compile term: {self.current_token.token_name}")
@@ -409,7 +427,10 @@ class CompilationEngine:
         self.process_symbol(";")
 
         if self.generate_vm_code:
-            vm_line = f"pop {symbol['kind']} {symbol['index']}"
+            if symbol["kind"] == "field":
+                vm_line = f"pop this {symbol['index']}"
+            else:
+                vm_line = f"pop {symbol['kind']} {symbol['index']}"
             self.compiled_vm_lines.append(vm_line)
     
     @add_tags("ifStatement")
@@ -500,11 +521,17 @@ class CompilationEngine:
         subroutine_name = self.current_token.token_name
         self.process_subroutine_name(declaration=False)
         self.process_symbol("(")
+
+        if self.generate_vm_code:
+            # calling a method (not function) from own class
+            vm_line = KEYWORD_CONSTANTS_JACK_TO_VM["this"]
+            self.compiled_vm_lines.append(vm_line)
+
         num_args = self.compile_expression_list()
         self.process_symbol(")")
 
         if self.generate_vm_code:
-            vm_line = f"call {subroutine_name} {num_args}"
+            vm_line = f"call {self.current_class_name}.{subroutine_name} {num_args + 1}"
             self.compiled_vm_lines.append(vm_line)
 
     def process_subroutine_attr(self):
@@ -518,24 +545,43 @@ class CompilationEngine:
         subroutine_name = self.current_token.token_name
         self.process_subroutine_name(declaration=False)
         self.process_symbol("(")
+        if self.generate_vm_code:
+            symbol = self.method_symbol_table.symbols.get(prefix)
+            if symbol is None:
+                symbol = self.class_symbol_table.symbols.get(prefix)
+
+            if symbol is None:
+                # function or constructor call from another class
+                call_line = f"call {prefix}.{subroutine_name} NUM_ARGS"
+            else:
+                # method call from another class
+                kind = symbol["kind"]
+                if kind == "field":
+                    kind = "this"
+                vm_line = f"push {kind} {symbol['index']}"
+                self.compiled_vm_lines.append(vm_line)
+                call_line = f"call {symbol['type']}.{subroutine_name} NUM_ARGS"
+
         num_args = self.compile_expression_list()
         self.process_symbol(")")
 
         if self.generate_vm_code:
-            vm_line = f"call {prefix}.{subroutine_name} {num_args}"
-            self.compiled_vm_lines.append(vm_line)
+            if symbol is not None:
+                num_args += 1
+            call_line = call_line.replace("NUM_ARGS", str(num_args))
+            self.compiled_vm_lines.append(call_line)
 
     @add_tags("returnStatement")
     def compile_return_statement(self):
         self.process_keyword("return")
 
-        if not self.current_token.is_symbol(";"):
-            self.compile_expression()
-        else:
+        if self.current_token.is_symbol(";"):
             if self.generate_vm_code:
                 # Dummy value
                 vm_line = "push constant 0"
                 self.compiled_vm_lines.append(vm_line)
+        else:
+            self.compile_expression()
 
         if self.generate_vm_code:
             vm_line = "return"
