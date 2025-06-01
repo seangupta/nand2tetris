@@ -252,12 +252,11 @@ class CompilationEngine:
                     self.compiled_vm_lines[len(self.compiled_vm_lines) - 1 - i] = vm_line
                     break
 
-
     @add_tags("parameterList")
     def compile_parameter_list(self):
         if self.current_token.is_type and self.next_token.is_identifier:
             data_type = self.current_token.token_name
-            self.process_current_token()
+            self.process_current_token(maybe_classname=True) # if Array or String
 
             name = self.current_token.token_name
 
@@ -374,11 +373,25 @@ class CompilationEngine:
             if self.generate_vm_code:
                 vm_line = UNARY_OPS_JACK_TO_VM[unary_op]
                 self.compiled_vm_lines.append(vm_line)
-        elif self.next_token.is_symbol('['):
-            self.process_varname()
+        elif self.next_token.is_symbol("["):
+            symbol = self.process_varname()
+            if self.generate_vm_code:
+                kind = symbol["kind"]
+                if kind == "field":
+                    kind = "this"
+
+                vm_line = f"push {kind} {symbol['index']}"
+                self.compiled_vm_lines.append(vm_line)
             self.process_symbol("[")
             self.compile_expression()
             self.process_symbol("]")
+            if self.generate_vm_code:
+                vm_lines = [
+                    "add",
+                    "pop pointer 1",
+                    "push that 0",
+                ]
+                self.compiled_vm_lines.extend(vm_lines)
         elif self.next_token.is_symbol("("):
             self.process_subroutine_no_attr()
         elif self.next_token.is_symbol("."):
@@ -448,8 +461,6 @@ class CompilationEngine:
             self.process_symbol(";")
             if self.generate_vm_code:
                 vm_lines = [
-                    "pop pointer 1",
-                    "push that 0",
                     "pop temp 0",
                     "pop pointer 1",
                     "push temp 0",
