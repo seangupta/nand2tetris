@@ -88,7 +88,7 @@ class CompilationEngine:
                 is_classname = True
                 symbol = {"kind": "class"}
             else:
-                raise ValueError(f"WARNING: Not found in symbol table: {self.current_token}")
+                raise ValueError(f"Not found in symbol table: {self.current_token}")
 
             tag = "identifier"
             self.add_opening_tag(tag)
@@ -555,8 +555,8 @@ class CompilationEngine:
 
         if self.generate_vm_code:
             # calling a method (not function) from own class
-            vm_line = KEYWORD_CONSTANTS_JACK_TO_VM["this"]
-            self.compiled_vm_lines.append(vm_line)
+            vm_lines = KEYWORD_CONSTANTS_JACK_TO_VM["this"]
+            self.compiled_vm_lines.extend(vm_lines)
 
         num_args = self.compile_expression_list()
         self.process_symbol(")")
