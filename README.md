@@ -6,7 +6,7 @@ Steps along the way:
 - CPU, memory, Harvard architecture
 - Assembly language and assembler
 - VM and VM-to-assembly translation
-- Compilation (to be added)
+- Compilation
 - Operating system (to be added)
 
 Full info at https://www.nand2tetris.org.

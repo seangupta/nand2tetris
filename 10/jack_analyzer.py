@@ -8,22 +8,25 @@ class JackAnalyzer:
     def __init__(self):
         pass
 
-    def analyze(self, path, compile):
+    def analyze(self, path, compile, generate_vm_code):
+        if not compile and generate_vm_code:
+            raise ValueError("Invalid argument combination")
+
         if os.path.isfile(path):
-            self.analyze_single_file(path, compile)
+            self.analyze_single_file(path, compile, generate_vm_code)
 
         elif os.path.isdir(path):
             for fn in os.listdir(path):
                 if not fn.endswith(".jack"):
                     continue
                 full_path = os.path.join(path, fn)
-                self.analyze_single_file(full_path, compile)
+                self.analyze_single_file(full_path, compile, generate_vm_code)
         else:
             raise ValueError("Unknown path type")
         
         print("Done")
         
-    def analyze_single_file(self, path, compile):
+    def analyze_single_file(self, path, compile, generate_vm_code):
         with open(path, "r") as f:
             lines = f.readlines()
         print(f"Read {path}")
@@ -39,9 +42,13 @@ class JackAnalyzer:
             os.makedirs(save_dir)
 
         if compile:
-            out_path = os.path.join(save_dir, f"{fn}.xml")
+            if generate_vm_code:
+                xml_out_path = os.path.join(save_dir, f"{fn}Symbols.xml")
+                vm_out_path = os.path.join(save_dir, f"{fn}.vm")
+            else:
+                xml_out_path = os.path.join(save_dir, f"{fn}.xml")
         else:
-            out_path = os.path.join(save_dir, f"{fn}T.xml")
+            xml_out_path = os.path.join(save_dir, f"{fn}T.xml")
 
         print("Starting tokenization")
         tokenizer = Tokenizer()
@@ -50,19 +57,26 @@ class JackAnalyzer:
 
         if compile:
             print("Starting compilation")
-            engine = CompilationEngine(output_tokens)
+            engine = CompilationEngine(output_tokens, generate_vm_code)
             engine.compile_class()
-            output_lines = engine.output_lines + [""]
+            xml_output_lines = engine.xml_output_lines + [""]
             print("Finished compilation")
+
+            compiled_vm_lines = engine.compiled_vm_lines
+            print(f"Compiled vm lines: {compiled_vm_lines}")
         else:
             print("Creating token output lines")
-            output_lines = self.get_output_tokenization(output_tokens)
+            xml_output_lines = self.get_output_tokenization(output_tokens)
             print("Finished creating token output lines")
 
-        with open(out_path, "w") as f:
-            f.writelines("\n".join(output_lines))
-
-        print(f"Output written to {out_path}")
+        with open(xml_out_path, "w") as f:
+            f.writelines("\n".join(xml_output_lines))
+        print(f"XML Output written to {xml_out_path}")
+        
+        if compile and generate_vm_code:
+            with open(vm_out_path, "w") as f:
+                f.writelines("\n".join(compiled_vm_lines))
+            print(f"Compiled VM output written to {vm_out_path}")
 
     def get_output_tokenization(self, output_tokens):
         output_lines = ["<tokens>"]          
@@ -78,7 +92,8 @@ class JackAnalyzer:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path")
-    parser.add_argument("--compile", action='store_true', default=False)
+    parser.add_argument("--no_compile", dest="compile", action='store_false', default=True)
+    parser.add_argument("--no_vm_code", dest="generate_vm_code", action='store_false', default=True)
     args = parser.parse_args()
     jack_analyzer = JackAnalyzer()
-    jack_analyzer.analyze(args.path, args.compile)
+    jack_analyzer.analyze(args.path, args.compile, args.generate_vm_code)
