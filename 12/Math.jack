@@ -80,12 +80,61 @@ class Math {
      *  an an expression, it handles it by invoking this method.
      *  Thus, x/y and Math.divide(x,y) return the same value. */
     function int divide(int x, int y) {
-        return 5;
+        var int res;
+        var boolean x_negative, y_negative;
+        
+        if (y = 0) {
+            do Sys.halt();
+        }
+
+        if (x < 0) {
+            let x = -x;
+            let x_negative = true;
+        }
+        if (y < 0) {
+            let y = -y;
+            let y_negative = true;
+        }
+
+        let res = Math.divide_positive(x, y);
+        if ((x_negative & (~y_negative)) | ((~x_negative) & y_negative)) {
+            let res = -res;
+        }
+        return res;
+    }
+
+    function int divide_positive(int x, int y) {
+        var int q, q_times_two;
+
+        if ((y > x) | (y < 0)) {
+            return 0;
+        }
+
+        let q = Math.divide(x, Math.multiply(2, y));
+        let q_times_two = Math.multiply(2, q);
+        if ((x - Math.multiply(q_times_two, y)) < y) {
+            return q_times_two;
+        }
+        else {
+            return q_times_two + 1;
+        }
     }
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
-        return 5;
+        var int y, j, tmp, tmp_squared;
+
+        let y = 0;
+        let j = Math.divide(n, 2) - 1;
+        while (j > -1) {
+            let tmp = y + powersOfTwo[j];
+            let tmp_squared = Math.multiply(tmp, tmp);
+            if (((tmp_squared - 1) < x) & (tmp_squared > 0)) {
+                let y = tmp;
+            }
+            let j = j - 1;
+        }
+        return y;
     }
 
     /** Returns the greater value. */
