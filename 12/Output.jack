@@ -185,13 +185,25 @@ class Output {
         var Array cursor_map, empty_map;
 
         let empty_map = Output.getMap(32);
-        do Output.display_map(cursor_row, cursor_col, empty_map);
-
-        let cursor_map = Output.getMap(0);
-        do Output.display_map(i, j, cursor_map);
-
         let cursor_row = i;
         let cursor_col = j;
+        do Output.display_map(cursor_row, cursor_col, empty_map);
+        return;
+    }
+
+    function void display_empty_map_at_cursor() {
+        var Array empty_map;
+
+        let empty_map = Output.getMap(32);
+        do Output.display_map(cursor_row, cursor_col, empty_map);
+        return;
+    }
+
+    function void display_cursor() {
+        var Array cursor_map;
+
+        let cursor_map = Output.getMap(0);
+        do Output.display_map(cursor_row, cursor_col, cursor_map);
         return;
     }
 
@@ -230,6 +242,11 @@ class Output {
     function void printChar(char c) {
         var Array map;
         var int new_cursor_row, new_cursor_col, old_cursor_row, old_cursor_col;
+
+        // don't do anything for non-printable characters 
+        if ((c < 32) | (c > 126)) {
+            return;
+        }
 
         if (cursor_col = 63) {
             if (cursor_row = 22) {
