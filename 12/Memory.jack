@@ -1,0 +1,78 @@
+// This file is part of www.nand2tetris.org
+// and the book "The Elements of Computing Systems"
+// by Nisan and Schocken, MIT Press.
+// File name: projects/12/Memory.jack
+/**
+ * This library provides two services: direct access to the computer's main
+ * memory (RAM), and allocation and recycling of memory blocks. The Hack RAM
+ * consists of 32,768 words, each holding a 16-bit binary number.
+ */ 
+class Memory {
+    static Array ram, heap;
+    static int free_list, end_of_free_list;
+
+    /** Initializes the class. */
+    function void init() {
+        let ram = 0;
+        let heap = 2048;
+        let free_list = heap;
+        let end_of_free_list = free_list;
+        let heap[0] = 0;
+        let heap[1] = 14334;
+        return;
+    }
+
+    /** Returns the RAM value at the given address. */
+    function int peek(int address) {
+        return ram[address];
+    }
+
+    /** Sets the RAM value at the given address to the given value. */
+    function void poke(int address, int value) {
+        let ram[address] = value;
+        return;
+    }
+
+    /** Finds an available RAM block of the given size and returns
+     *  a reference to its base address. */
+    function int alloc(int size) {
+        var int block_addr, next, size_needed, available_size, diff;
+        
+        // Base address of the data part of the new block
+        let block_addr = -1;
+        let next = free_list;
+        let size_needed = size + 2;
+
+        while ((~(next = 0)) & (block_addr = -1)) {
+            let available_size = ram[next + 1];
+            let diff = available_size - size_needed;
+            if (diff > - 1) {
+                let block_addr = (next + 2) + diff;
+            }
+            else {
+                let next = ram[next];
+            }
+        }
+
+        if (block_addr = -1) {
+            do Sys.halt();
+        }
+
+        // Segment's size is reduced
+        let ram[next + 1] = diff;
+
+        // Set size and next pointer of block
+        let ram[block_addr - 1] = size;
+        let ram[block_addr - 2] = 0; // next pointer
+
+        return block_addr;
+    }
+
+    /** De-allocates the given object (cast as an array) by making
+     *  it available for future allocations. */
+    function void deAlloc(Array o) {
+        let ram[end_of_free_list] = o - 2;
+        let end_of_free_list = o - 2;
+        return;
+    }    
+}
