@@ -7,7 +7,7 @@ Steps along the way:
 - Assembly language and assembler
 - VM and VM-to-assembly translation
 - Compilation
-- Operating system (to be added)
+- Operating system
 
 Full info at https://www.nand2tetris.org.
 
