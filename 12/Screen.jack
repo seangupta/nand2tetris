@@ -93,9 +93,11 @@ class Screen {
     }
 
     function void drawLineHorizontal(int x1, int x2, int y) {
-        var int address, tmp1, tmp2, rem1, rem2, value, new_value, mask, x_min, x_max;
+        var int address, address_base, tmp1, tmp2, rem1, rem2, value, new_value, mask, x_min, x_max;
         var int num_pixels_to_color_left, num_pixels_to_color_right;
         var int address_complete_start, address_complete_end, address_incomplete_left, address_incomplete_right;
+
+        let address_base = screen_map_start + (32 * y);
 
         let x_min = Math.min(x1, x2);
         let x_max = Math.max(x1, x2);
@@ -104,28 +106,27 @@ class Screen {
         let rem1 = x_min - (16 * tmp1);
         if (rem1 > 0) {
             let num_pixels_to_color_left = 16 - rem1;
-            let address_complete_start = screen_map_start + ((32 * y) + (tmp1 + 1));
+            let address_complete_start = address_base + (tmp1 + 1);
         }
         else {
             let num_pixels_to_color_left = 0;
-            let address_complete_start = screen_map_start + ((32 * y) + tmp1);
+            let address_complete_start = address_base + tmp1;
         }
 
         let tmp2 = x_max / 16;
         let rem2 = x_max - (16 * tmp2);
         if (rem2 < 15) {
             let num_pixels_to_color_right = rem2 + 1;
-            let address_complete_end = screen_map_start + ((32 * y) + (tmp2 - 1));
+            let address_complete_end = address_base + (tmp2 - 1);
         }
         else {
             let num_pixels_to_color_right = 0;
-            let address_complete_end = screen_map_start + ((32 * y) + tmp2);
+            let address_complete_end = address_base + tmp2;
         }
 
         if (tmp1 = tmp2) {
             // colour line within single address
-            let address = screen_map_start + ((32 * y) + tmp1);
-
+            let address = address_base + tmp1;
             let value = Memory.peek(address);
 
             // 0s followed by 1s (from rem1 to rem2) followed by 0s
