@@ -15,6 +15,10 @@ class Array {
     /** Constructs a new Array of the given size. */
     function Array new(int size) {
         var int address;
+
+        if (size < 1) {
+            do Sys.error(2);
+        }
         
         let address = Memory.alloc(size);
         return address;

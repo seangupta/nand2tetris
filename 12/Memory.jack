@@ -37,6 +37,10 @@ class Memory {
      *  a reference to its base address. */
     function int alloc(int size) {
         var int block_addr, next, size_needed, available_size, diff;
+
+        if (size < 1) {
+            do Sys.error(5);
+        }
         
         // Base address of the data part of the new block
         let block_addr = -1;
@@ -55,7 +59,7 @@ class Memory {
         }
 
         if (block_addr = -1) {
-            do Sys.halt();
+            do Sys.error(6); // heap overflow
         }
 
         // Segment's size is reduced

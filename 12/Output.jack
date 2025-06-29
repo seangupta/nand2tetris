@@ -184,6 +184,14 @@ class Output {
     function void moveCursor(int i, int j) {
         var Array cursor_map, empty_map;
 
+        if ((i < 0) | (i > 22)) {
+            do Sys.error(20);
+        }
+
+        if ((j < 0) | (j > 63)) {
+            do Sys.error(20);
+        }
+
         let empty_map = Output.getMap(32);
         let cursor_row = i;
         let cursor_col = j;

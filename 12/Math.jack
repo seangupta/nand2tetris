@@ -32,6 +32,10 @@ class Math {
         return;
     }
 
+    function Array get_powers_of_two() {
+        return powersOfTwo;
+    }
+
     // Returns true if the i-th bit of x is 1, false otherwise
     function boolean bit(int x, int i){
         var int idx, rem, diff;
@@ -84,7 +88,7 @@ class Math {
         var boolean x_negative, y_negative;
         
         if (y = 0) {
-            do Sys.halt();
+            do Sys.error(3);
         }
 
         if (x < 0) {
@@ -104,14 +108,15 @@ class Math {
     }
 
     function int divide_positive(int x, int y) {
-        var int q, q_times_two;
+        var int q, q_times_two, y_times_two;
 
         if ((y > x) | (y < 0)) {
             return 0;
         }
 
-        let q = Math.divide(x, Math.multiply(2, y));
-        let q_times_two = Math.multiply(2, q);
+        let y_times_two = y + y;
+        let q = Math.divide(x, y_times_two);
+        let q_times_two = q + q;
         if ((x - Math.multiply(q_times_two, y)) < y) {
             return q_times_two;
         }
@@ -123,6 +128,10 @@ class Math {
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
         var int y, j, tmp, tmp_squared;
+
+        if (x < 0) {
+            do Sys.error(4);
+        }
 
         let y = 0;
         let j = Math.divide(n, 2) - 1;
