@@ -92,10 +92,12 @@ class Screen {
         return;
     }
 
-    function void drawLineHorizontal(int x1, int x2, int y) {
-        var int address, address_base, tmp1, tmp2, rem1, rem2, value, new_value, mask, x_min, x_max;
+    /** draws horizontal lines, repeating repeat times (going downwards) */
+    function void drawLineHorizontal(int x1, int x2, int y, int repeat) {
+        var int address, address_base, tmp1, tmp2, rem1, rem2, value, new_value, mask, x_min, x_max, r;
         var int num_pixels_to_color_left, num_pixels_to_color_right;
         var int address_complete_start, address_complete_end, address_incomplete_left, address_incomplete_right;
+        var int address_to, address_from;
 
         let address_base = screen_map_start + (32 * y);
 
@@ -126,26 +128,15 @@ class Screen {
 
         if (tmp1 = tmp2) {
             // colour line within single address
-            let address = address_base + tmp1;
-            let value = Memory.peek(address);
 
             // 0s followed by 1s (from rem1 to rem2) followed by 0s
             let mask = masks_01[16 - rem1] - masks_01[15 - rem2];
-
-            if (color) {
-                let new_value = value | mask;
-            }
-            else {
-                let new_value = value & (~mask);
-            }
-            do Memory.poke(address, new_value);
-        }
-        else {
-            if (num_pixels_to_color_left > 0) {
-                // draw all pixels in left incomplete segment
-                let address_incomplete_left = address_complete_start - 1;
-                let value = Memory.peek(address_incomplete_left);
-                let mask = masks_01[num_pixels_to_color_left];
+            
+            let address = address_base + tmp1;
+            
+            let r = 0;
+            while (r < repeat) {
+                let value = Memory.peek(address);
 
                 if (color) {
                     let new_value = value | mask;
@@ -153,34 +144,83 @@ class Screen {
                 else {
                     let new_value = value & (~mask);
                 }
-                do Memory.poke(address_incomplete_left, new_value);
+
+                do Memory.poke(address, new_value);
+                let r = r + 1;
+                let address = address + 32;
+            }
+        }
+        else {
+            if (num_pixels_to_color_left > 0) {
+                // draw all pixels in left incomplete segment
+
+                let mask = masks_01[num_pixels_to_color_left];
+                let address_incomplete_left = address_complete_start - 1;
+                let address = address_incomplete_left;
+
+                let r = 0;
+                while (r < repeat) {
+                    let value = Memory.peek(address);
+                    
+                    if (color) {
+                        let new_value = value | mask;
+                    }
+                    else {
+                        let new_value = value & (~mask);
+                    }
+                    do Memory.poke(address, new_value);
+
+                    let r = r + 1;
+                    let address = address + 32;
+                }
             }
 
             // colour complete lines
-            let address = address_complete_start;
-            while (address < (address_complete_end + 1)) {
-                if (color) {
-                    do Memory.poke(address, -1);
+
+            let address_from = address_complete_start;
+            let address_to = address_complete_end;
+
+            let r = 0;
+            while (r < repeat) {
+                let address = address_from;
+                while (address < (address_to + 1)) {
+                    if (color) {
+                        do Memory.poke(address, -1);
+                    }
+                    else {
+                        do Memory.poke(address, 0);
+                    }
+                    let address = address + 1;
                 }
-                else {
-                    do Memory.poke(address, 0);
-                }
-                let address = address + 1;
+
+                let r = r + 1;
+                let address_from = address_from + 32;
+                let address_to = address_to + 32;
             }
 
             if (num_pixels_to_color_right > 0) {
                 // draw all pixels in right incomplete segment
-                let address_incomplete_right = address_complete_end + 1;
-                let value = Memory.peek(address_incomplete_right);
+
                 let mask = masks_01[16 - num_pixels_to_color_right];
 
-                if (color) {
-                    let new_value = value | (~mask);
+                let address_incomplete_right = address_complete_end + 1;
+                let address = address_incomplete_right;
+
+                let r = 0;
+                while (r < repeat) {
+                    let value = Memory.peek(address);
+
+                    if (color) {
+                        let new_value = value | (~mask);
+                    }
+                    else {
+                        let new_value = value & mask;
+                    }
+                    do Memory.poke(address, new_value);
+
+                    let r = r + 1;
+                    let address = address + 32;
                 }
-                else {
-                    let new_value = value & mask;
-                }
-                do Memory.poke(address_incomplete_right, new_value);
             }
         }
 
@@ -220,7 +260,7 @@ class Screen {
         }
 
         if (y1 = y2) {
-            do Screen.drawLineHorizontal(x1, x2, y1);
+            do Screen.drawLineHorizontal(x1, x2, y1, 1);
             return;
         }
 
@@ -270,7 +310,7 @@ class Screen {
     /** Draws a filled rectangle whose top left corner is (x1, y1)
      *  and bottom right corner is (x2,y2), using the current color. */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
-        var int y;
+        var int num_lines;
 
         if ((x1 < 0) | (x1 > 511)) {
             do Sys.error(9);
@@ -288,11 +328,8 @@ class Screen {
             do Sys.error(9);
         }
 
-        let y = y1;
-        while (y < (y2 + 1)) {
-            do Screen.drawLineHorizontal(x1, x2, y);
-            let y = y + 1;
-        }
+        let num_lines = (y2 - y1) + 1;
+        do Screen.drawLineHorizontal(x1, x2, y1, num_lines);
         return;
     }
 
@@ -320,7 +357,7 @@ class Screen {
             let x2 = x + sqrt;
             let y1 = y + dy;
 
-            do Screen.drawLineHorizontal(x1, x2, y1);
+            do Screen.drawLineHorizontal(x1, x2, y1, 1);
             let dy = dy + 1;
         }
         return;
