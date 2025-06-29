@@ -229,7 +229,7 @@ class Screen {
 
     /** Draws a line from pixel (x1,y1) to pixel (x2,y2), using the current color. */
     function void drawLine(int x1, int y1, int x2, int y2) {
-        var int x, y, dx, dy, i, mult, a, b, diff;
+        var int x, y, dx, dy, i, mult, a, b, diff, y_draw;
 
         if ((x1 < 0) | (x1 > 511)) {
             do Sys.error(8);
@@ -293,7 +293,13 @@ class Screen {
         let diff = 0;
 
         while ((a < (dx + 1)) & (b < (dy + 1))) {
-            do Screen.drawPixel(x + a, y + (b * mult));
+            if (mult = 1) {
+                let y_draw = y + b;
+            }
+            else {
+                let y_draw = y - b;
+            }
+            do Screen.drawPixel(x + a, y_draw);
             if (diff < 0) {
                 let a = a + 1;
                 let diff = diff + dy;
@@ -335,7 +341,7 @@ class Screen {
 
     /** Draws a filled circle of radius r<=181 around (x,y), using the current color. */
     function void drawCircle(int x, int y, int r) {
-        var int dy, sqrt, x1, x2, y1, r_squared, dy_squared;
+        var int dy, sqrt, x1, x2, r_squared, dy_squared, sqrt_prev, sqrt_now, y_rect_start, y_rect_end;
 
         if (r > 181) {
             do Sys.error(13);
@@ -353,17 +359,34 @@ class Screen {
 
         let dy = -r;
         let dy_squared = dy * dy;
-        while (dy < (r + 1)) {
-            
-            let sqrt = Math.sqrt(r_squared - dy_squared);
-            let x1 = x - sqrt;
-            let x2 = x + sqrt;
-            let y1 = y + dy;
+        let y_rect_start = y - r;
 
-            do Screen.drawLineHorizontal(x1, x2, y1, 1);
+        while (dy < (r + 1)) {
+            let sqrt_now = Math.sqrt(r_squared - dy_squared);
+
+            if (dy > -r) {
+                if (~(sqrt_now = sqrt_prev)) {
+                    let x1 = x - sqrt_prev;
+                    let x2 = x + sqrt_prev;
+                    let y_rect_end = y + (dy - 1);
+
+                    do Screen.drawRectangle(x1, y_rect_start, x2, y_rect_end);
+                    let y_rect_start = y + dy;
+                }
+            }
+
+            let sqrt_prev = sqrt_now;
             let dy_squared = dy_squared + ((dy + dy) + 1); 
             let dy = dy + 1;
         }
+        
+        if (~(y_rect_end = r)) {
+            let x1 = x - sqrt_prev;
+            let x2 = x + sqrt_prev;
+            let y_rect_end = y + r;
+            do Screen.drawRectangle(x1, y_rect_start, x2, y_rect_end);
+        }
+
         return;
     }
 }
